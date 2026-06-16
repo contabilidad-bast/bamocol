@@ -190,19 +190,17 @@ body.present .kpi .k-val{font-size:26px}
 #lockScreen{position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 50% 28%,#13283a,#0a121c 70%);display:flex;align-items:center;justify-content:center}
 .lock-card{background:linear-gradient(160deg,#1b2837,#121d29);border:1px solid #2b3e54;border-radius:18px;padding:38px 34px;width:370px;max-width:92vw;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.55)}
 .lock-mark{width:62px;height:62px;border-radius:16px;background:linear-gradient(135deg,#16b8a6,#0c7d74);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:25px;color:#04201d;margin:0 auto 16px;box-shadow:0 6px 22px rgba(0,0,0,.35)}
-.lock-card h1{font-size:20px;margin-bottom:4px}
-.lock-sub{font-size:12px;color:#93a6bb;margin-bottom:22px}
+.lock-card h1{font-size:20px;margin-bottom:4px}.lock-sub{font-size:12px;color:#93a6bb;margin-bottom:22px}
 #lockForm{display:flex;flex-direction:column;gap:10px}
 #lockPw{background:#0f1722;border:1px solid #2b3e54;color:#e7eef6;border-radius:10px;padding:12px 14px;font-size:14px;text-align:center}
 #lockPw:focus{outline:none;border-color:#16b8a6}
 #lockBtn{background:#16b8a6;color:#04201d;border:0;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer}
 #lockBtn:hover{background:#19cdb9}#lockBtn:disabled{opacity:.6;cursor:wait}
-.lock-msg{font-size:12.5px;margin-top:14px;min-height:18px;color:#7ff0bb}
-.lock-msg.err{color:#ff8d83}
-.lock-foot{font-size:10.5px;color:#6c8099;margin-top:20px;line-height:1.5}
-body.locked{overflow:hidden}</style>
+.lock-msg{font-size:12.5px;margin-top:14px;min-height:18px;color:#7ff0bb}.lock-msg.err{color:#ff8d83}
+.lock-foot{font-size:10.5px;color:#6c8099;margin-top:20px;line-height:1.5}body.locked{overflow:hidden}</style>
 </head>
-<body><div id="lockScreen"><div class="lock-card">
+<body>
+<div id="lockScreen"><div class="lock-card">
 <div class="lock-mark">BM</div>
 <h1>BAMOCOL S.A.</h1>
 <p class="lock-sub">Dashboard Gerencial &middot; Acceso restringido</p>
@@ -1090,96 +1088,12 @@ function exportCSV(){
 function exportExcel(){
   const rows=curMetricsRows();
   let t='<table border=1>'+rows.map(r=>'<tr>'+r.map(c=>`<td>${c}</td>`).join('')+'</tr>').join('')+'</table>';
-  const html=`<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body><div id="lockScreen"><div class="lock-card">
-<div class="lock-mark">BM</div>
-<h1>BAMOCOL S.A.</h1>
-<p class="lock-sub">Dashboard Gerencial &middot; Acceso restringido</p>
-<form id="lockForm" autocomplete="off">
-<input type="password" id="lockPw" placeholder="Contrase&ntilde;a de acceso" autocomplete="current-password">
-<button type="submit" id="lockBtn">Ingresar</button>
-</form>
-<div id="lockMsg" class="lock-msg"></div>
-<div class="lock-foot">Informaci&oacute;n financiera confidencial<br>Uso exclusivo de junta directiva y gerencia</div>
-</div></div>${t}<script>
-(function(){
-  document.body.classList.add('locked');
-  var b64=function(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0);});};
-  var form=document.getElementById('lockForm'),pw=document.getElementById('lockPw'),
-      btn=document.getElementById('lockBtn'),msg=document.getElementById('lockMsg');
-  setTimeout(function(){pw.focus();},200);
-  async function tryUnlock(p){
-    if(!window.crypto||!crypto.subtle) throw new Error('nocrypto');
-    var km=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);
-    var key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(ENC.salt),iterations:ENC.iter,hash:'SHA-256'},km,{name:'AES-CBC',length:256},false,['decrypt']);
-    var ptBuf=await crypto.subtle.decrypt({name:'AES-CBC',iv:b64(ENC.iv)},key,b64(ENC.ct));
-    return JSON.parse(new TextDecoder().decode(ptBuf));
-  }
-  form.addEventListener('submit',async function(e){
-    e.preventDefault();
-    msg.className='lock-msg';msg.textContent='';btn.disabled=true;btn.textContent='Verificando...';
-    try{
-      var arr=await tryUnlock(pw.value);
-      msg.textContent='Acceso concedido';
-      boot(arr);
-      var ls=document.getElementById('lockScreen');
-      ls.style.transition='opacity .4s';ls.style.opacity='0';
-      setTimeout(function(){ls.remove();document.body.classList.remove('locked');},400);
-    }catch(err){
-      btn.disabled=false;btn.textContent='Ingresar';
-      msg.className='lock-msg err';
-      msg.textContent=(err&&err.message==='nocrypto')?'Este navegador requiere conexion segura (https).':'Contrasena incorrecta. Intente de nuevo.';
-      pw.value='';pw.focus();
-    }
-  });
-})();
-</script></body></html>`;
+  const html=`<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body>${t}</body></html>`;
   dl(html,'Resumen_BAMOCOL.xls','application/vnd.ms-excel');
 }
 function exportTableById(id,name){
   const tb=document.getElementById(id);if(!tb)return;
-  const html=`<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body><div id="lockScreen"><div class="lock-card">
-<div class="lock-mark">BM</div>
-<h1>BAMOCOL S.A.</h1>
-<p class="lock-sub">Dashboard Gerencial &middot; Acceso restringido</p>
-<form id="lockForm" autocomplete="off">
-<input type="password" id="lockPw" placeholder="Contrase&ntilde;a de acceso" autocomplete="current-password">
-<button type="submit" id="lockBtn">Ingresar</button>
-</form>
-<div id="lockMsg" class="lock-msg"></div>
-<div class="lock-foot">Informaci&oacute;n financiera confidencial<br>Uso exclusivo de junta directiva y gerencia</div>
-</div></div><h3>BAMOCOL S.A. - ${name} - ${periodLabel()}</h3>${tb.outerHTML}<script>
-(function(){
-  document.body.classList.add('locked');
-  var b64=function(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0);});};
-  var form=document.getElementById('lockForm'),pw=document.getElementById('lockPw'),
-      btn=document.getElementById('lockBtn'),msg=document.getElementById('lockMsg');
-  setTimeout(function(){pw.focus();},200);
-  async function tryUnlock(p){
-    if(!window.crypto||!crypto.subtle) throw new Error('nocrypto');
-    var km=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);
-    var key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(ENC.salt),iterations:ENC.iter,hash:'SHA-256'},km,{name:'AES-CBC',length:256},false,['decrypt']);
-    var ptBuf=await crypto.subtle.decrypt({name:'AES-CBC',iv:b64(ENC.iv)},key,b64(ENC.ct));
-    return JSON.parse(new TextDecoder().decode(ptBuf));
-  }
-  form.addEventListener('submit',async function(e){
-    e.preventDefault();
-    msg.className='lock-msg';msg.textContent='';btn.disabled=true;btn.textContent='Verificando...';
-    try{
-      var arr=await tryUnlock(pw.value);
-      msg.textContent='Acceso concedido';
-      boot(arr);
-      var ls=document.getElementById('lockScreen');
-      ls.style.transition='opacity .4s';ls.style.opacity='0';
-      setTimeout(function(){ls.remove();document.body.classList.remove('locked');},400);
-    }catch(err){
-      btn.disabled=false;btn.textContent='Ingresar';
-      msg.className='lock-msg err';
-      msg.textContent=(err&&err.message==='nocrypto')?'Este navegador requiere conexion segura (https).':'Contrasena incorrecta. Intente de nuevo.';
-      pw.value='';pw.focus();
-    }
-  });
-})();
-</script></body></html>`;
+  const html=`<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body><h3>BAMOCOL S.A. - ${name} - ${periodLabel()}</h3>${tb.outerHTML}</body></html>`;
   dl(html,name+'_BAMOCOL.xls','application/vnd.ms-excel');
 }
 function dl(content,fname,mime){
@@ -1223,14 +1137,12 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')document.body.classL
     msg.className='lock-msg';msg.textContent='';btn.disabled=true;btn.textContent='Verificando...';
     try{
       var arr=await tryUnlock(pw.value);
-      msg.textContent='Acceso concedido';
-      boot(arr);
+      msg.textContent='Acceso concedido';boot(arr);
       var ls=document.getElementById('lockScreen');
       ls.style.transition='opacity .4s';ls.style.opacity='0';
       setTimeout(function(){ls.remove();document.body.classList.remove('locked');},400);
     }catch(err){
-      btn.disabled=false;btn.textContent='Ingresar';
-      msg.className='lock-msg err';
+      btn.disabled=false;btn.textContent='Ingresar';msg.className='lock-msg err';
       msg.textContent=(err&&err.message==='nocrypto')?'Este navegador requiere conexion segura (https).':'Contrasena incorrecta. Intente de nuevo.';
       pw.value='';pw.focus();
     }
