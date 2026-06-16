@@ -1,0 +1,5 @@
+# Nunca publicar fuentes ni datos en texto plano
+*.xls
+*.xlsx
+data.js
+*.csv

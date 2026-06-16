@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Gerencial · BAMOCOL S.A. en Reorganización</title>
+<script src="chart.min.js"></script>
+<style>
+:root{
+  --bg:#0f1722; --bg2:#15202e; --panel:#1b2837; --panel2:#22344a;
+  --line:#2b3e54; --txt:#e7eef6; --muted:#93a6bb; --muted2:#6c8099;
+  --accent:#16b8a6; --accent2:#0ea5a0; --blue:#3b82f6; --pos:#22c55e; --neg:#ef4444;
+  --warn:#f59e0b; --gold:#eab308; --purple:#8b5cf6;
+  --shadow:0 6px 22px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.45}
+a{color:var(--accent)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#33485f;border-radius:6px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* Layout */
+.app{display:flex;min-height:100vh}
+.sidebar{width:248px;background:linear-gradient(180deg,#10212f,#0c1925);border-right:1px solid var(--line);position:fixed;top:0;bottom:0;left:0;display:flex;flex-direction:column;z-index:40}
+.brand{padding:18px 18px 14px;border-bottom:1px solid var(--line)}
+.brand .logo{display:flex;align-items:center;gap:10px}
+.brand .mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#0c7d74);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#04201d;box-shadow:var(--shadow)}
+.brand h1{font-size:15px;font-weight:700;letter-spacing:.2px}
+.brand .sub{font-size:10.5px;color:var(--muted2);margin-top:2px;text-transform:uppercase;letter-spacing:.8px}
+.nav{padding:10px 10px;overflow-y:auto;flex:1}
+.nav .grp{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;padding:14px 12px 6px}
+.nav button{width:100%;text-align:left;background:transparent;border:0;color:var(--muted);padding:10px 12px;border-radius:9px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:10px;transition:.15s}
+.nav button:hover{background:var(--panel);color:var(--txt)}
+.nav button.active{background:linear-gradient(90deg,rgba(22,184,166,.18),rgba(22,184,166,.03));color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
+.nav .ic{width:20px;text-align:center;font-size:15px}
+.sidebar .foot{padding:12px 16px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted2)}
+
+.main{margin-left:248px;flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{position:sticky;top:0;z-index:30;background:rgba(15,23,34,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.topbar .title-wrap{flex:1;min-width:200px}
+.topbar h2{font-size:18px;font-weight:700}
+.topbar .crumb{font-size:11.5px;color:var(--muted2)}
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filt{display:flex;flex-direction:column;gap:3px}
+.filt label{font-size:9.5px;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;padding-left:2px}
+.chip-yr{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:3px}
+.chip-yr button{background:transparent;border:0;color:var(--muted);padding:5px 10px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600}
+.chip-yr button.on{background:var(--accent);color:#04201d}
+select,input[type=number]{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:7px 9px;font-size:12.5px;outline:none}
+select:focus,input:focus{border-color:var(--accent)}
+.btn{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;transition:.15s}
+.btn:hover{background:var(--panel2);border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:#04201d;border-color:var(--accent);font-weight:700}
+.btn.primary:hover{background:#19cdb9}
+
+.content{padding:22px 24px 60px;max-width:1600px;width:100%}
+.page{display:none;animation:fade .35s ease}
+.page.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.section-h{display:flex;align-items:center;gap:10px;margin:26px 0 14px}
+.section-h:first-child{margin-top:4px}
+.section-h h3{font-size:16px;font-weight:700}
+.section-h .ln{flex:1;height:1px;background:var(--line)}
+.section-h .tag{font-size:10.5px;color:var(--muted2);background:var(--panel);border:1px solid var(--line);padding:3px 9px;border-radius:20px}
+
+/* KPI cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(216px,1fr));gap:14px}
+.kpi{background:linear-gradient(160deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
+.kpi.neg::before{background:var(--neg)}.kpi.pos::before{background:var(--pos)}.kpi.warnb::before{background:var(--warn)}
+.kpi .k-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;display:flex;align-items:center;gap:6px}
+.kpi .k-val{font-size:23px;font-weight:800;margin-top:9px;letter-spacing:-.3px}
+.kpi .k-sub{font-size:11.5px;color:var(--muted2);margin-top:3px}
+.kpi .k-delta{margin-top:9px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:20px}
+.k-delta.up{color:#8af0c8;background:rgba(34,197,94,.13)}
+.k-delta.down{color:#ffb4ad;background:rgba(239,68,68,.13)}
+.k-delta.flat{color:var(--muted);background:rgba(255,255,255,.05)}
+
+/* Panels */
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}.g2-1{grid-template-columns:2fr 1fr}.g1-2{grid-template-columns:1fr 2fr}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.card h4{font-size:13.5px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card .hint{font-size:11px;color:var(--muted2);margin-bottom:12px}
+.chart-box{position:relative;height:300px}
+.chart-box.sm{height:240px}.chart-box.lg{height:360px}
+.badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;letter-spacing:.3px}
+.badge.ok{background:rgba(34,197,94,.15);color:#7ff0bb}
+.badge.mid{background:rgba(245,158,11,.15);color:#ffce7a}
+.badge.bad{background:rgba(239,68,68,.15);color:#ffb0a8}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
+table.fin{width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px}
+table.fin th,table.fin td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+table.fin th:first-child,table.fin td:first-child{text-align:left}
+table.fin thead th{background:var(--bg2);color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0}
+table.fin tbody tr:hover{background:rgba(255,255,255,.025)}
+table.fin tr.lvl0 td{font-weight:800;background:rgba(22,184,166,.06);font-size:13px}
+table.fin tr.lvl1 td{font-weight:700}
+table.fin tr.sub td:first-child{padding-left:28px;color:var(--muted)}
+table.fin tr.total td{font-weight:800;border-top:2px solid var(--accent);background:rgba(22,184,166,.08)}
+.num-neg{color:#ff8d83}.num-pos{color:#7ff0bb}
+
+/* Semaforo */
+.sem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.sem{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px;display:flex;gap:14px;align-items:flex-start}
+.sem .dot{width:14px;height:14px;border-radius:50%;margin-top:5px;flex-shrink:0;box-shadow:0 0 0 4px rgba(255,255,255,.04)}
+.sem .dot.g{background:var(--pos);box-shadow:0 0 12px rgba(34,197,94,.6)}
+.sem .dot.y{background:var(--gold);box-shadow:0 0 12px rgba(234,179,8,.5)}
+.sem .dot.r{background:var(--neg);box-shadow:0 0 12px rgba(239,68,68,.55)}
+.sem .s-label{font-size:12px;color:var(--muted);font-weight:600}
+.sem .s-val{font-size:21px;font-weight:800;margin:3px 0}
+.sem .s-desc{font-size:11px;color:var(--muted2)}
+
+/* Insight / narrative */
+.insight{background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:16px 18px}
+.insight h4{font-size:13.5px;margin-bottom:10px;color:#cdeee9;display:flex;align-items:center;gap:8px}
+.insight ul{list-style:none}
+.insight li{padding:7px 0 7px 24px;position:relative;font-size:13px;color:#d4e1ee;border-bottom:1px dashed rgba(255,255,255,.06)}
+.insight li:last-child{border-bottom:0}
+.insight li::before{content:"▸";position:absolute;left:4px;color:var(--accent);font-weight:800}
+.insight li b{color:#fff}
+.insight.warn{border-left-color:var(--warn)}
+.insight.warn h4{color:#ffdca6}
+.insight.danger{border-left-color:var(--neg)}
+.insight.danger h4{color:#ffc1ba}
+
+.note{font-size:11px;color:var(--muted2);font-style:italic;margin-top:8px}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.pill{font-size:11px;padding:5px 11px;border-radius:20px;background:var(--bg2);border:1px solid var(--line);color:var(--muted)}
+
+/* ESP cards */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.feat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px;border-top:3px solid var(--accent)}
+.feat.b{border-top-color:var(--blue)}.feat.p{border-top-color:var(--purple)}.feat.w{border-top-color:var(--warn)}
+.feat h5{font-size:13px;margin-bottom:8px}
+.feat p,.feat li{font-size:12px;color:var(--muted);line-height:1.5}
+.feat ul{margin-left:16px;margin-top:4px}
+
+/* Hero indicator */
+.hero{background:linear-gradient(135deg,#0c3b37,#114b45 60%,#0a2e2b);border:1px solid #1c6b62;border-radius:18px;padding:24px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(22,184,166,.25),transparent 70%)}
+.hero .h-tit{font-size:13px;color:#9fe6dc;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.hero .h-big{font-size:40px;font-weight:900;margin:6px 0;letter-spacing:-1px;color:#fff}
+.hero .h-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:16px}
+.hero .h-cell{background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:12px 14px}
+.hero .h-cell .l{font-size:10.5px;color:#9fe6dc;text-transform:uppercase;letter-spacing:.5px}
+.hero .h-cell .v{font-size:20px;font-weight:800;margin-top:4px}
+
+/* Simulator */
+.sim-ctrl{display:flex;flex-direction:column;gap:16px}
+.sim-row label{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:6px}
+.sim-row label b{color:var(--accent);font-size:13px}
+input[type=range]{width:100%;accent-color:var(--accent);height:5px}
+table.cmp{width:100%;border-collapse:collapse;font-size:13px}
+table.cmp th,table.cmp td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:right}
+table.cmp th:first-child,table.cmp td:first-child{text-align:left;color:var(--muted)}
+table.cmp thead th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted2)}
+table.cmp td.opt{color:#7ff0bb;font-weight:700}
+table.cmp td.act{font-weight:600}
+table.cmp tr.hl td{background:rgba(22,184,166,.07);font-weight:800;border-top:2px solid var(--accent)}
+.delta-tag{font-size:11px;padding:2px 7px;border-radius:12px;margin-left:6px}
+.delta-tag.up{background:rgba(34,197,94,.15);color:#7ff0bb}
+.delta-tag.down{background:rgba(239,68,68,.15);color:#ffb0a8}
+
+.footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:11px;color:var(--muted2);line-height:1.7}
+
+/* presentation mode */
+body.present .sidebar{transform:translateX(-260px)}
+body.present .main{margin-left:0}
+body.present .topbar{padding:10px 40px}
+body.present .content{padding:30px 50px;max-width:1700px;margin:0 auto}
+body.present .kpi .k-val{font-size:26px}
+
+/* print */
+@media print{
+  .sidebar,.topbar .filters,.no-print{display:none!important}
+  .main{margin-left:0}.topbar{position:static}
+  .page{display:block!important;page-break-after:always}
+  body{background:#fff;color:#111}
+  .card,.kpi,.sem,.insight,.feat,.hero{box-shadow:none;border-color:#ccc;background:#fff!important;color:#111}
+  .kpi .k-val,.hero .h-big,.sem .s-val{color:#000}
+  table.fin th,table.fin td{color:#111}
+}
+@media(max-width:1100px){.g2,.g3,.g2-1,.g1-2{grid-template-columns:1fr}}
+@media(max-width:820px){.sidebar{transform:translateX(-260px)}.main{margin-left:0}}
+#lockScreen{position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 50% 28%,#13283a,#0a121c 70%);display:flex;align-items:center;justify-content:center}
+.lock-card{background:linear-gradient(160deg,#1b2837,#121d29);border:1px solid #2b3e54;border-radius:18px;padding:38px 34px;width:370px;max-width:92vw;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.lock-mark{width:62px;height:62px;border-radius:16px;background:linear-gradient(135deg,#16b8a6,#0c7d74);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:25px;color:#04201d;margin:0 auto 16px;box-shadow:0 6px 22px rgba(0,0,0,.35)}
+.lock-card h1{font-size:20px;margin-bottom:4px}
+.lock-sub{font-size:12px;color:#93a6bb;margin-bottom:22px}
+#lockForm{display:flex;flex-direction:column;gap:10px}
+#lockPw{background:#0f1722;border:1px solid #2b3e54;color:#e7eef6;border-radius:10px;padding:12px 14px;font-size:14px;text-align:center}
+#lockPw:focus{outline:none;border-color:#16b8a6}
+#lockBtn{background:#16b8a6;color:#04201d;border:0;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer}
+#lockBtn:hover{background:#19cdb9}#lockBtn:disabled{opacity:.6;cursor:wait}
+.lock-msg{font-size:12.5px;margin-top:14px;min-height:18px;color:#7ff0bb}
+.lock-msg.err{color:#ff8d83}
+.lock-foot{font-size:10.5px;color:#6c8099;margin-top:20px;line-height:1.5}
+body.locked{overflow:hidden}</style>
+</head>
+<body><div id="lockScreen"><div class="lock-card">
+<div class="lock-mark">BM</div>
+<h1>BAMOCOL S.A.</h1>
+<p class="lock-sub">Dashboard Gerencial &middot; Acceso restringido</p>
+<form id="lockForm" autocomplete="off">
+<input type="password" id="lockPw" placeholder="Contrase&ntilde;a de acceso" autocomplete="current-password">
+<button type="submit" id="lockBtn">Ingresar</button>
+</form>
+<div id="lockMsg" class="lock-msg"></div>
+<div class="lock-foot">Informaci&oacute;n financiera confidencial<br>Uso exclusivo de junta directiva y gerencia</div>
+</div></div>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo">
+        <div class="mark">BM</div>
+        <div>
+          <h1>BAMOCOL S.A.</h1>
+          <div class="sub">En Reorganización</div>
+        </div>
+      </div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="grp">Análisis Financiero</div>
+      <button data-pg="resumen" class="active"><span class="ic">📊</span> Resumen Ejecutivo</button>
+      <button data-pg="eerr"><span class="ic">📑</span> Estado de Resultados</button>
+      <button data-pg="costos"><span class="ic">💸</span> Costos y Gastos</button>
+      <button data-pg="indic"><span class="ic">🎯</span> Indicadores Financieros</button>
+      <div class="grp">Estrategia &amp; Tributario</div>
+      <button data-pg="tribut"><span class="ic">🧾</span> Optimización Tributaria</button>
+      <button data-pg="simul"><span class="ic">⚖️</span> Simulador de Escenarios</button>
+      <button data-pg="conclu"><span class="ic">📌</span> Conclusiones Ejecutivas</button>
+    </nav>
+    <div class="foot">
+      NIT 805.009.601-8<br>Cifras en pesos (COP)<br>Períodos 2023 – Mayo 2026
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="topbar">
+      <div class="title-wrap">
+        <h2 id="pgTitle">Resumen Ejecutivo</h2>
+        <div class="crumb" id="pgCrumb">Visión consolidada de desempeño financiero</div>
+      </div>
+      <div class="filters no-print">
+        <div class="filt">
+          <label>Año(s)</label>
+          <div class="chip-yr" id="yrChips"></div>
+        </div>
+        <div class="filt">
+          <label>Desde mes</label>
+          <select id="mFrom"></select>
+        </div>
+        <div class="filt">
+          <label>Hasta mes</label>
+          <select id="mTo"></select>
+        </div>
+        <div class="filt">
+          <label>Línea de servicio</label>
+          <select id="fServ">
+            <option value="all">Todas</option>
+            <option value="usp">Aseo / Saneamiento (USP)</option>
+            <option value="transporte">Transporte de baños</option>
+            <option value="alquiler">Alquiler de equipos</option>
+            <option value="comercio">Comercio / Otros</option>
+          </select>
+        </div>
+        <div class="filt">
+          <label>Exportar / Modo</label>
+          <div style="display:flex;gap:6px">
+            <button class="btn" onclick="exportCSV()" title="Exportar CSV">CSV</button>
+            <button class="btn" onclick="exportExcel()" title="Exportar Excel">Excel</button>
+            <button class="btn" onclick="window.print()" title="Exportar PDF / Imprimir">PDF</button>
+            <button class="btn primary" onclick="togglePresent()" title="Modo presentación">▶</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- PAGE: RESUMEN -->
+      <section class="page active" id="pg-resumen">
+        <div class="section-h"><h3>Indicadores Clave (KPIs)</h3><div class="ln"></div><span class="tag" id="kpiPeriodTag"></span></div>
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="grid g2-1" style="margin-top:18px">
+          <div class="card">
+            <h4>Ingresos vs. Resultado Neto <span class="badge mid" id="resTrendBadge"></span></h4>
+            <div class="hint">Evolución mensual del período seleccionado</div>
+            <div class="chart-box"><canvas id="chResumen"></canvas></div>
+          </div>
+          <div class="insight" id="resumenAuto">
+            <h4>🧠 Resumen Ejecutivo Automático</h4>
+            <ul id="resumenAutoList"></ul>
+          </div>
+        </div>
+        <div class="grid g2" style="margin-top:18px">
+          <div class="card"><h4>Estructura del Estado de Resultados</h4><div class="hint">Composición del período (ingresos = 100%)</div><div class="chart-box sm"><canvas id="chWaterfall"></canvas></div></div>
+          <div class="card"><h4>Resultado Neto por Año</h4><div class="hint">Comparativo histórico (2026 = ene–may)</div><div class="chart-box sm"><canvas id="chResYear"></canvas></div></div>
+        </div>
+      </section>
+
+      <!-- PAGE: EERR -->
+      <section class="page" id="pg-eerr">
+        <div class="section-h"><h3>Estado de Resultados Gerencial</h3><div class="ln"></div><span class="tag" id="eerrPeriodTag"></span></div>
+        <div class="card">
+          <h4>Estado de Resultados — Detalle del período <button class="btn no-print" style="font-size:11px;padding:5px 9px" onclick="exportTableById('eerrTable','Estado_Resultados')">⬇ Excel</button></h4>
+          <div class="hint">Cifras en pesos colombianos. Comparado contra el mismo período del año anterior.</div>
+          <div class="tbl-wrap"><table class="fin" id="eerrTable"></table></div>
+        </div>
+        <div class="grid g2" style="margin-top:18px">
+          <div class="card"><h4>Tendencia: Ingresos, Costos y Gastos</h4><div class="hint">Línea de tiempo mensual</div><div class="chart-box"><canvas id="chTrend"></canvas></div></div>
+          <div class="card"><h4>Evolución de la Utilidad Neta</h4><div class="hint">Resultado mensual del período</div><div class="chart-box"><canvas id="chUtil"></canvas></div></div>
+        </div>
+        <div class="grid g2" style="margin-top:18px">
+          <div class="card"><h4>Comparativo Anual</h4><div class="hint">Ingresos · EBITDA · Resultado neto por año</div><div class="chart-box"><canvas id="chCompAnual"></canvas></div></div>
+          <div class="card"><h4>Márgenes (% sobre ingresos op.)</h4><div class="hint">Bruto · Operacional · Neto · EBITDA</div><div class="chart-box"><canvas id="chMargenes"></canvas></div></div>
+        </div>
+        <div class="insight" id="eerrAuto" style="margin-top:18px"><h4>📈 Análisis Automático de Variaciones</h4><ul id="eerrAutoList"></ul></div>
+      </section>
+
+      <!-- PAGE: COSTOS -->
+      <section class="page" id="pg-costos">
+        <div class="section-h"><h3>Análisis de Costos y Gastos</h3><div class="ln"></div><span class="tag" id="costPeriodTag"></span></div>
+        <div class="grid g2-1">
+          <div class="card"><h4>Pareto de Costos y Gastos</h4><div class="hint">Principales generadores de costo (80/20)</div><div class="chart-box lg"><canvas id="chPareto"></canvas></div></div>
+          <div class="card"><h4>Participación %</h4><div class="hint">Estructura del gasto total</div><div class="chart-box lg"><canvas id="chPart"></canvas></div></div>
+        </div>
+        <div class="grid g2" style="margin-top:18px">
+          <div class="card"><h4>Evolución histórica por naturaleza</h4><div class="hint">MOD · CIF · Admón · Ventas · Financieros</div><div class="chart-box"><canvas id="chCostEvol"></canvas></div></div>
+          <div class="card">
+            <h4>Detalle por categoría <button class="btn no-print" style="font-size:11px;padding:5px 9px" onclick="exportTableById('costTable','Costos_Gastos')">⬇ Excel</button></h4>
+            <div class="hint">Período seleccionado vs. año anterior</div>
+            <div class="tbl-wrap"><table class="fin" id="costTable"></table></div>
+          </div>
+        </div>
+        <div class="insight warn" id="costAuto" style="margin-top:18px"><h4>🔍 Hallazgos y Oportunidades de Optimización</h4><ul id="costAutoList"></ul></div>
+      </section>
+
+      <!-- PAGE: INDICADORES -->
+      <section class="page" id="pg-indic">
+        <div class="section-h"><h3>Indicadores Financieros</h3><div class="ln"></div><span class="tag">🟢 Favorable · 🟡 Atención · 🔴 Riesgo</span></div>
+        <div class="section-h"><h4 style="font-size:13px;color:var(--muted)">RENTABILIDAD</h4><div class="ln"></div></div>
+        <div class="sem-grid" id="semRent"></div>
+        <div class="section-h"><h4 style="font-size:13px;color:var(--muted)">LIQUIDEZ OPERATIVA</h4><div class="ln"></div></div>
+        <div class="sem-grid" id="semLiq"></div>
+        <div class="section-h"><h4 style="font-size:13px;color:var(--muted)">EFICIENCIA</h4><div class="ln"></div></div>
+        <div class="sem-grid" id="semEfi"></div>
+        <div class="card" style="margin-top:18px"><h4>Radar de salud financiera</h4><div class="hint">Posición del período seleccionado frente a umbrales de referencia</div><div class="chart-box"><canvas id="chRadar"></canvas></div></div>
+      </section>
+
+      <!-- PAGE: TRIBUTARIO -->
+      <section class="page" id="pg-tribut">
+        <div class="section-h"><h3>Optimización Tributaria y Competitividad Empresarial</h3><div class="ln"></div></div>
+        <div class="hero" style="margin-bottom:20px">
+          <div class="h-tit">⭐ Indicador Estratégico Principal</div>
+          <div class="h-tit" style="color:#fff;font-size:16px;letter-spacing:0;margin-top:4px">Ahorro Potencial de IVA y Recuperación de Flujo de Caja</div>
+          <div class="h-big" id="heroAhorroAnual">—</div>
+          <div style="font-size:12px;color:#bdeee7">Estimación anualizada de IVA sobre la base reclasificable (escenario de referencia)</div>
+          <div class="h-grid" id="heroGrid"></div>
+        </div>
+
+        <div class="section-h"><h3 style="font-size:14px">Diagnóstico Tributario Actual</h3><div class="ln"></div><span class="tag" id="ivaPeriodTag"></span></div>
+        <div class="grid g3">
+          <div class="card"><h4>Composición de la facturación</h4><div class="hint">Excluido (servicio público de aseo) vs. gravado/optimizable</div><div class="chart-box sm"><canvas id="chIvaComp"></canvas></div></div>
+          <div class="card"><h4>IVA generado estimado</h4><div class="hint">Evolución sobre base gravable (19%)</div><div class="chart-box sm"><canvas id="chIvaEvol"></canvas></div></div>
+          <div class="card">
+            <h4>Participación del IVA</h4>
+            <div class="hint">Impacto sobre ventas y precio final</div>
+            <div id="ivaStats"></div>
+          </div>
+        </div>
+        <div class="insight" id="ivaDiag" style="margin-top:16px"><h4>🧾 Lectura del diagnóstico tributario</h4><ul id="ivaDiagList"></ul></div>
+
+        <div class="section-h"><h3 style="font-size:14px">Evaluación Estratégica de Calificación como ESP</h3><div class="ln"></div></div>
+        <div class="hint" style="margin-bottom:12px">Análisis ejecutivo sobre la posibilidad de solicitar la calificación como Empresa de Servicios Públicos ante la Superintendencia de Servicios Públicos Domiciliarios.</div>
+        <div class="feat-grid">
+          <div class="feat"><h5>✅ Optimización tributaria</h5><p>Los servicios públicos domiciliarios de aseo gozan de tratamiento <b>excluido de IVA</b>. Consolidar la operación como ESP refuerza la exclusión sobre la línea principal (~95% de la facturación) y reduce riesgo de discusión tributaria.</p></div>
+          <div class="feat b"><h5>✅ Tratamiento diferencial frente al IVA</h5><p>Posibilidad de homogeneizar el tratamiento de líneas hoy gravadas (alquiler, transporte) bajo el marco de gestión integral de residuos, disminuyendo el IVA que encarece el precio final.</p></div>
+          <div class="feat p"><h5>✅ Competitividad comercial</h5><p>Precios sin componente de IVA mejoran la posición frente a competidores y facilitan la contratación con entidades públicas y grandes clientes.</p></div>
+          <div class="feat"><h5>✅ Fortalecimiento del objeto social</h5><p>Alinea el objeto social con la actividad real (saneamiento ambiental), habilitando nuevos mercados regulados y contratación estatal.</p></div>
+          <div class="feat w"><h5>⚠️ Requisitos y ajustes</h5><ul><li>Cumplimiento regulatorio ante la SSPD y registro RUPS.</li><li>Ajustes en facturación, contabilidad regulatoria y reportes.</li><li>Estructura tarifaria conforme a la CRA.</li></ul></div>
+          <div class="feat w"><h5>⚠️ Costos, riesgos y oportunidades</h5><ul><li>Costos de estructuración y cumplimiento.</li><li>Mayor supervisión estatal.</li><li>Oportunidad: estabilidad de ingresos regulados y reputación.</li></ul></div>
+        </div>
+        <div class="insight" style="margin-top:16px"><h4>📌 Conclusión ejecutiva — ESP</h4><ul>
+          <li>La calificación como ESP es <b>estratégicamente favorable</b>: blinda el tratamiento excluido de la línea principal y abre una vía ordenada para optimizar el IVA de las líneas accesorias.</li>
+          <li>El beneficio tributario y competitivo <b>supera los costos de estructuración</b> en un horizonte de mediano plazo, especialmente relevante para una compañía en reorganización que requiere liberar caja.</li>
+          <li>Se recomienda avanzar con un <b>estudio regulatorio y tributario formal</b> antes de la radicación; el presente análisis es de carácter gerencial, no constituye concepto jurídico.</li>
+        </ul></div>
+
+        <div class="section-h"><h3 style="font-size:14px">Reestructuración del Modelo de Facturación</h3><div class="ln"></div></div>
+        <div class="grid g2">
+          <div class="card" style="border-top:3px solid var(--warn)">
+            <h4>Modelo Actual</h4>
+            <div class="hint">Facturación por líneas comerciales tradicionales</div>
+            <ul class="insight" style="border:0;background:transparent;padding:0">
+              <li>Arrendamiento de baños portátiles (<b>gravado 19%</b>)</li>
+              <li>Servicios de transporte de baños</li>
+              <li>Alquiler de equipos y casetas (gravado)</li>
+              <li>Venta de muebles, repuestos y químicos</li>
+            </ul>
+            <div class="note">El componente gravado encarece el precio final y exige remitir IVA, tensionando la caja.</div>
+          </div>
+          <div class="card" style="border-top:3px solid var(--accent)">
+            <h4>Modelo Estratégico</h4>
+            <div class="hint">Estructuración bajo conceptos ambientales / de servicio público</div>
+            <ul class="insight" style="border:0;background:transparent;padding:0">
+              <li>Recolección y transporte de residuos</li>
+              <li>Gestión y manejo integral de residuos</li>
+              <li>Servicios de saneamiento y disposición</li>
+              <li>Tratamiento de residuos y servicios ambientales</li>
+            </ul>
+            <div class="note">Mayor base bajo tratamiento excluido → mejor precio competitivo y mayor flujo de caja disponible.</div>
+          </div>
+        </div>
+        <div class="grid g2" style="margin-top:16px">
+          <div class="card"><h4>Impacto comparado del modelo</h4><div class="hint">Estimación sobre el período seleccionado (anualizado)</div><div class="chart-box sm"><canvas id="chModelo"></canvas></div></div>
+          <div class="insight" id="restrAuto"><h4>💡 Análisis gerencial de la reestructuración</h4><ul id="restrList"></ul><div class="note">Análisis gerencial para toma de decisiones. No constituye conclusión jurídica ni concepto legal definitivo.</div></div>
+        </div>
+
+        <div class="section-h"><h3 style="font-size:14px">Empresa en Insolvencia — Sostenibilidad</h3><div class="ln"></div></div>
+        <div class="insight danger"><h4>⚠️ Observaciones ejecutivas sobre la reorganización</h4><ul id="insolList"></ul></div>
+      </section>
+
+      <!-- PAGE: SIMULADOR -->
+      <section class="page" id="pg-simul">
+        <div class="section-h"><h3>Simulador Gerencial de Escenarios</h3><div class="ln"></div><span class="tag">Base: período seleccionado (anualizado)</span></div>
+        <div class="grid g1-2">
+          <div class="card">
+            <h4>Supuestos del escenario optimizado</h4>
+            <div class="hint">Modifique los supuestos para visualizar el impacto</div>
+            <div class="sim-ctrl">
+              <div class="sim-row"><label>% de base gravada reclasificada a excluido <b id="sl1v">70%</b></label><input type="range" id="sl1" min="0" max="100" value="70"></div>
+              <div class="sim-row"><label>Tarifa de IVA aplicable <b id="sl2v">19%</b></label><input type="range" id="sl2" min="0" max="19" value="19"></div>
+              <div class="sim-row"><label>↑ Ventas por mejora de competitividad <b id="sl3v">6%</b></label><input type="range" id="sl3" min="0" max="25" value="6"></div>
+              <div class="sim-row"><label>↓ Costos por eficiencia operativa <b id="sl4v">4%</b></label><input type="range" id="sl4" min="0" max="20" value="4"></div>
+              <div class="sim-row"><label>↓ Gastos financieros (reestructuración pasivo) <b id="sl5v">15%</b></label><input type="range" id="sl5" min="0" max="60" value="15"></div>
+              <button class="btn primary" onclick="resetSim()">↺ Restablecer supuestos</button>
+            </div>
+          </div>
+          <div class="card">
+            <h4>Escenario Actual vs. Optimizado</h4>
+            <div class="hint">Cifras anualizadas en millones de pesos (COP)</div>
+            <div class="tbl-wrap"><table class="cmp" id="simTable"></table></div>
+            <div class="grid g2" style="margin-top:16px">
+              <div class="chart-box sm"><canvas id="chSimUtil"></canvas></div>
+              <div class="chart-box sm"><canvas id="chSimCaja"></canvas></div>
+            </div>
+          </div>
+        </div>
+        <div class="insight" id="simAuto" style="margin-top:18px"><h4>📊 Lectura del escenario</h4><ul id="simList"></ul><div class="note">Simulación gerencial con fines de planeación. Los resultados dependen de los supuestos y no constituyen proyección garantizada ni concepto tributario.</div></div>
+      </section>
+
+      <!-- PAGE: CONCLUSIONES -->
+      <section class="page" id="pg-conclu">
+        <div class="section-h"><h3>Conclusiones Ejecutivas Automáticas</h3><div class="ln"></div><span class="tag" id="concPeriodTag"></span></div>
+        <div class="grid g2">
+          <div class="insight"><h4>1 · Situación financiera actual</h4><ul id="c1"></ul></div>
+          <div class="insight"><h4>2 · Tendencia de ingresos</h4><ul id="c2"></ul></div>
+          <div class="insight warn"><h4>3 · Evolución de costos y gastos</h4><ul id="c3"></ul></div>
+          <div class="insight"><h4>4 · Comportamiento de la rentabilidad</h4><ul id="c4c"></ul></div>
+          <div class="insight danger"><h4>5 · Situación del flujo de caja</h4><ul id="c5"></ul></div>
+          <div class="insight danger"><h4>6 · Riesgos identificados</h4><ul id="c6"></ul></div>
+          <div class="insight"><h4>7 · Oportunidades de mejora</h4><ul id="c7"></ul></div>
+          <div class="insight"><h4>8 · Potencial de optimización tributaria</h4><ul id="c8"></ul></div>
+          <div class="insight"><h4>9 · Impacto esperado de calificación como ESP</h4><ul id="c9"></ul></div>
+          <div class="insight"><h4>10 · Beneficios de la reestructuración de facturación</h4><ul id="c10"></ul></div>
+        </div>
+        <div class="insight" style="margin-top:16px;border-left-color:var(--gold)"><h4 style="color:#ffe08a">11 · Recomendaciones para la recuperación financiera</h4><ul id="c11"></ul></div>
+        <div class="footer">
+          <b>BAÑO MÓVIL DE COLOMBIA S.A. — BAMOCOL S.A. EN REORGANIZACIÓN</b> · NIT 805.009.601-8<br>
+          Dashboard gerencial generado a partir de los estados de resultados (PYG) cuatrimestrales 2023–2025 y comparativo mensual enero–mayo 2026. Cifras en pesos colombianos.<br>
+          <i>Documento de uso interno para la junta directiva y la gerencia. Los análisis tributarios y de reestructuración tienen carácter gerencial y no constituyen conceptos jurídicos ni proyecciones garantizadas. El flujo de caja operativo se estima por método indirecto simplificado a partir del estado de resultados.</i>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script src="data.enc.js"></script>
+<script>
+/* ============ MODELO DE DATOS ============ */
+const MONTHS=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const YEARS=[2023,2024,2025,2026];
+const YMAX={2023:12,2024:12,2025:12,2026:5};
+let RAW_ACCOUNTS=[];const IDX={};
+function buildIndex(){RAW_ACCOUNTS.forEach(r=>{(IDX[r.year]=IDX[r.year]||{})[r.code]=r.vals;});}
+function rawVal(y,code,m){const a=IDX[y]&&IDX[y][code];return a?(a[m]||0):0;}
+
+// Clasificación líneas de ingreso (4-dígitos)
+const ING_LINES={usp:['4170'],transporte:['4145'],alquiler:['4155'],comercio:['4135']};
+const COD={ingOper:'41',ingNoOper:'42',gAdm:'51',gVen:'52',gFin:'53',costo:'7',mod:'72',cif:'73',
+  depre:['5160','5260','7360'],amort:['5165','5265','7365'],imp:['5115','5215','7315'],devol:'4175',fin:'5305'};
+
+let STATE={years:[2026],mFrom:1,mTo:5,serv:'all'};
+
+function periods(){
+  const out=[];
+  STATE.years.forEach(y=>{
+    const hi=Math.min(STATE.mTo,YMAX[y]);
+    for(let m=STATE.mFrom;m<=hi;m++) out.push({y,m:m-1});
+  });
+  return out.sort((a,b)=> a.y-b.y || a.m-b.m);
+}
+function prevPeriods(){return periods().map(p=>({y:p.y-1,m:p.m})).filter(p=>IDX[p.y]);}
+
+// suma de un código (o lista) sobre un set de periodos, respetando filtro de servicio para ingresos op.
+function sumOver(per,code){let s=0;per.forEach(p=>{s+=rawVal(p.y,code,p.m);});return s;}
+function sumList(per,list){let s=0;list.forEach(c=>s+=sumOver(per,c));return s;}
+
+// Ingresos operacionales respetando filtro de servicio
+function ingOperOf(per){
+  if(STATE.serv==='all') return -sumOver(per,COD.ingOper);
+  // suma de la línea filtrada (neto de devoluciones sólo en 'all')
+  return sumList(per,ING_LINES[STATE.serv]).__neg ? 0 : -sumList(per,ING_LINES[STATE.serv]);
+}
+function ingLine(per,key){return -sumList(per,ING_LINES[key]);}
+
+function metrics(per){
+  const m={};
+  const servAll=STATE.serv==='all';
+  m.ingOper = servAll ? -sumOver(per,COD.ingOper) : ingLine(per,STATE.serv);
+  m.usp=ingLine(per,'usp'); m.transp=ingLine(per,'transporte'); m.alq=ingLine(per,'alquiler'); m.com=ingLine(per,'comercio');
+  m.devol = sumOver(per,COD.devol); // positivo (reduce)
+  m.ingNoOper = -sumOver(per,COD.ingNoOper);
+  m.costo = sumOver(per,COD.costo); m.mod=sumOver(per,COD.mod); m.cif=sumOver(per,COD.cif);
+  // si filtro de servicio, prorratea costo según participación de la línea en ingreso op total (aprox)
+  if(!servAll){
+    const ingTot=-sumOver(per,COD.ingOper); const share=ingTot>0? m.ingOper/ingTot:0;
+    m.costo*=share; m.mod*=share; m.cif*=share;
+  }
+  m.gAdm=sumOver(per,COD.gAdm); m.gVen=sumOver(per,COD.gVen); m.gFin=sumOver(per,COD.gFin);
+  if(!servAll){const ingTot=-sumOver(per,COD.ingOper);const share=ingTot>0? m.ingOper/ingTot:0;m.gAdm*=share;m.gVen*=share;m.gFin*=share;m.ingNoOper*=share;}
+  m.utilBruta=m.ingOper-m.costo;
+  m.gastosOper=m.gAdm+m.gVen;
+  m.utilOper=m.utilBruta-m.gastosOper;
+  m.resultado=m.utilOper+m.ingNoOper-m.gFin;
+  m.depre=sumList(per,COD.depre); m.amort=sumList(per,COD.amort);
+  if(!servAll){const ingTot=-sumOver(per,COD.ingOper);const share=ingTot>0? m.ingOper/ingTot:0;m.depre*=share;m.amort*=share;}
+  m.ebitda=m.utilOper+m.depre+m.amort;
+  m.imp=sumList(per,COD.imp);
+  m.fco=m.resultado+m.depre+m.amort; // proxy
+  m.gastosTot=m.gAdm+m.gVen+m.gFin;
+  // márgenes
+  m.mBruto = m.ingOper? m.utilBruta/m.ingOper:0;
+  m.mOper  = m.ingOper? m.utilOper/m.ingOper:0;
+  m.mNeto  = m.ingOper? m.resultado/m.ingOper:0;
+  m.mEbitda= m.ingOper? m.ebitda/m.ingOper:0;
+  m.gAdmPct= m.ingOper? m.gAdm/m.ingOper:0;
+  m.gFinPct= m.ingOper? m.gFin/m.ingOper:0;
+  m.convCaja= m.ebitda? m.fco/m.ebitda:0;
+  m.prodIng = m.gastosTot? m.ingOper/m.gastosTot:0;
+  // IVA
+  m.baseGravable=m.transp+m.alq+m.com;
+  m.baseExcluida=m.usp;
+  m.ivaGen=m.baseGravable*0.19;
+  m.nMonths=per.length;
+  return m;
+}
+
+/* ============ FORMATO ============ */
+const nf0=new Intl.NumberFormat('es-CO',{maximumFractionDigits:0});
+const nfCOP=v=>(v<0?'-':'')+'$ '+nf0.format(Math.abs(Math.round(v)));
+const nfM=v=>{const x=v/1e6;return (x<0?'-':'')+'$'+nf0.format(Math.abs(Math.round(x)))+' M';};
+const nfM1=v=>{const x=v/1e6;return (x<0?'-':'')+'$'+(Math.abs(x)).toLocaleString('es-CO',{maximumFractionDigits:1})+' M';};
+const pct=(v,d=1)=>(v*100).toLocaleString('es-CO',{maximumFractionDigits:d,minimumFractionDigits:d})+'%';
+const signClass=v=>v<0?'num-neg':'num-pos';
+function deltaPct(cur,prev){if(!prev||prev===0)return null;return (cur-prev)/Math.abs(prev);}
+
+/* ============ NAVEGACIÓN ============ */
+const PG_META={resumen:['Resumen Ejecutivo','Visión consolidada de desempeño financiero'],
+ eerr:['Estado de Resultados Gerencial','Ingresos, costos, gastos y utilidad del período'],
+ costos:['Análisis de Costos y Gastos','Estructura, Pareto y oportunidades de optimización'],
+ indic:['Indicadores Financieros','Rentabilidad, liquidez y eficiencia — semáforo'],
+ tribut:['Optimización Tributaria y Competitividad','IVA, calificación ESP y reestructuración'],
+ simul:['Simulador Gerencial de Escenarios','Comparación de escenario actual vs. optimizado'],
+ conclu:['Conclusiones Ejecutivas','Hallazgos y recomendaciones automatizadas']};
+let activePg='resumen';
+document.querySelectorAll('#nav button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    const pg=b.dataset.pg; activePg=pg;
+    document.getElementById('pg-'+pg).classList.add('active');
+    document.getElementById('pgTitle').textContent=PG_META[pg][0];
+    document.getElementById('pgCrumb').textContent=PG_META[pg][1];
+    window.scrollTo(0,0);
+    renderActive();
+  };
+});
+
+/* ============ FILTROS UI ============ */
+const yrChips=document.getElementById('yrChips');
+YEARS.forEach(y=>{const b=document.createElement('button');b.textContent=y;b.dataset.y=y;
+  if(STATE.years.includes(y))b.classList.add('on');
+  b.onclick=()=>{const yy=+b.dataset.y;
+    if(STATE.years.includes(yy)){if(STATE.years.length>1)STATE.years=STATE.years.filter(x=>x!==yy);}
+    else STATE.years.push(yy);
+    STATE.years.sort();
+    document.querySelectorAll('#yrChips button').forEach(x=>x.classList.toggle('on',STATE.years.includes(+x.dataset.y)));
+    syncMonthMax();renderAll();
+  };
+  yrChips.appendChild(b);
+});
+const mFromSel=document.getElementById('mFrom'),mToSel=document.getElementById('mTo');
+MONTHS.forEach((m,i)=>{mFromSel.add(new Option(m,i+1));mToSel.add(new Option(m,i+1));});
+function syncMonthMax(){
+  const maxAvail=Math.max(...STATE.years.map(y=>YMAX[y]));
+  if(STATE.mTo>maxAvail){STATE.mTo=maxAvail;}
+  mFromSel.value=STATE.mFrom;mToSel.value=STATE.mTo;
+}
+mFromSel.value=STATE.mFrom;mToSel.value=STATE.mTo;
+mFromSel.onchange=()=>{STATE.mFrom=+mFromSel.value;if(STATE.mFrom>STATE.mTo){STATE.mTo=STATE.mFrom;mToSel.value=STATE.mTo;}renderAll();};
+mToSel.onchange=()=>{STATE.mTo=+mToSel.value;if(STATE.mTo<STATE.mFrom){STATE.mFrom=STATE.mTo;mFromSel.value=STATE.mFrom;}renderAll();};
+document.getElementById('fServ').onchange=e=>{STATE.serv=e.target.value;renderAll();};
+
+function periodLabel(){
+  const ys=STATE.years.join(', ');
+  return `${MONTHS[STATE.mFrom-1]}–${MONTHS[STATE.mTo-1]} · ${ys}`;
+}
+
+/* ============ CHART HELPERS ============ */
+Chart.defaults.color='#93a6bb';Chart.defaults.font.family='Segoe UI';Chart.defaults.font.size=11;
+Chart.defaults.plugins.legend.labels.boxWidth=12;Chart.defaults.plugins.legend.labels.usePointStyle=true;
+const GRID={color:'rgba(255,255,255,.05)'};
+const charts={};
+function mkChart(id,cfg){if(charts[id])charts[id].destroy();const el=document.getElementById(id);if(!el)return;charts[id]=new Chart(el,cfg);}
+const C={teal:'#16b8a6',blue:'#3b82f6',red:'#ef4444',green:'#22c55e',gold:'#eab308',purple:'#8b5cf6',orange:'#f59e0b',gray:'#64748b'};
+function tlLabels(){return periods().map(p=>MONTHS[p.m]+'-'+String(p.y).slice(2));}
+const moneyTick=v=>'$'+nf0.format(v/1e6)+'M';
+
+/* ============ RENDER: RESUMEN ============ */
+function renderResumen(){
+  const per=periods(),prev=prevPeriods();
+  const m=metrics(per),mp=metrics(prev);
+  document.getElementById('kpiPeriodTag').textContent=periodLabel();
+  const varIng=deltaPct(m.ingOper,mp.ingOper), varGas=deltaPct(m.gastosTot,mp.gastosTot);
+  const KPIS=[
+    ['Ingresos Totales',nfCOP(m.ingOper+m.ingNoOper),deltaPct(m.ingOper+m.ingNoOper,mp.ingOper+mp.ingNoOper),'Operac. + No operac.',''],
+    ['Costos Totales',nfCOP(m.costo),deltaPct(m.costo,mp.costo),'Costo de operación (MOD+CIF)','inv'],
+    ['Gastos Totales',nfCOP(m.gastosTot),varGas,'Admón + Ventas + Financieros','inv'],
+    ['EBITDA',nfCOP(m.ebitda),deltaPct(m.ebitda,mp.ebitda),pct(m.mEbitda)+' margen',''],
+    ['Utilidad Operacional',nfCOP(m.utilOper),deltaPct(m.utilOper,mp.utilOper),pct(m.mOper)+' margen',''],
+    ['Utilidad Neta',nfCOP(m.resultado),deltaPct(m.resultado,mp.resultado),pct(m.mNeto)+' margen neto',''],
+    ['Flujo de Caja Operativo',nfCOP(m.fco),deltaPct(m.fco,mp.fco),'Proxy (indirecto)',''],
+    ['Margen Operacional',pct(m.mOper),m.mOper-mp.mOper,'vs '+pct(mp.mOper)+' año ant.','pp'],
+    ['Margen Neto',pct(m.mNeto),m.mNeto-mp.mNeto,'vs '+pct(mp.mNeto)+' año ant.','pp'],
+    ['Variación de Ingresos',varIng!=null?pct(varIng):'—',varIng,'Ingresos op. vs año anterior','self'],
+    ['Variación de Gastos',varGas!=null?pct(varGas):'—',varGas,'Gastos vs año anterior','selfinv'],
+  ];
+  const grid=document.getElementById('kpiGrid');grid.innerHTML='';
+  KPIS.forEach(([label,val,delta,sub,mode])=>{
+    let cls='',dtxt='',dcls='flat',arrow='→';
+    const isInv=mode==='inv'||mode==='selfinv';
+    if(delta!=null && !isNaN(delta)){
+      let good = isInv? delta<0 : delta>0;
+      if(Math.abs(delta)<0.0005){dcls='flat';arrow='→';}
+      else {dcls=good?'up':'down';arrow=delta>0?'▲':'▼';}
+      if(mode==='pp') dtxt=arrow+' '+(delta*100).toLocaleString('es-CO',{maximumFractionDigits:1})+' pp';
+      else dtxt=arrow+' '+pct(Math.abs(delta));
+      cls=good?'pos':'neg';
+    }
+    // KPI border color by nature
+    let border='';
+    if(label.includes('Utilidad Neta')||label.includes('Margen Neto')) border=m.resultado<0?'neg':'pos';
+    else if(label.includes('EBITDA')||label.includes('Operacional')) border=val.includes('-')?'neg':'pos';
+    grid.insertAdjacentHTML('beforeend',
+      `<div class="kpi ${border}"><div class="k-label">${label}</div>
+       <div class="k-val">${val}</div><div class="k-sub">${sub}</div>
+       ${dtxt?`<div class="k-delta ${dcls}">${dtxt}</div>`:''}</div>`);
+  });
+
+  // chart ingresos vs resultado
+  const lbls=tlLabels();
+  const ingArr=per.map(p=>metrics([p]).ingOper);
+  const resArr=per.map(p=>metrics([p]).resultado);
+  mkChart('chResumen',{type:'bar',data:{labels:lbls,datasets:[
+    {type:'bar',label:'Ingresos op.',data:ingArr,backgroundColor:'rgba(22,184,166,.55)',borderRadius:5,order:2},
+    {type:'line',label:'Resultado neto',data:resArr,borderColor:C.gold,backgroundColor:C.gold,tension:.3,borderWidth:2,pointRadius:3,order:1,yAxisID:'y'}
+  ]},options:baseOpts({stacked:false})});
+  const totRes=resArr.reduce((a,b)=>a+b,0);
+  const badge=document.getElementById('resTrendBadge');
+  badge.textContent=totRes<0?'Pérdida acumulada':'Utilidad acumulada';
+  badge.className='badge '+(totRes<0?'bad':'ok');
+
+  // waterfall-ish structure
+  mkChart('chWaterfall',{type:'bar',data:{labels:['Ingresos','Costos','Gastos op.','Financieros','Resultado'],
+    datasets:[{data:[m.ingOper,-m.costo,-m.gastosOper,-m.gFin,m.resultado],
+      backgroundColor:[C.teal,C.orange,C.purple,C.red,m.resultado<0?C.red:C.green],borderRadius:5}]},
+    options:{...baseOpts(),plugins:{legend:{display:false},tooltip:tt()}}});
+
+  // resultado por año
+  const ry=YEARS.map(y=>{const pp=[];for(let mm=0;mm<YMAX[y];mm++)pp.push({y,m:mm});return metrics(pp).resultado;});
+  mkChart('chResYear',{type:'bar',data:{labels:YEARS.map(y=>y+(y===2026?'*':'')),
+    datasets:[{data:ry,backgroundColor:ry.map(v=>v<0?C.red:C.green),borderRadius:6}]},
+    options:{...baseOpts(),plugins:{legend:{display:false},tooltip:tt()}}});
+
+  // resumen automático
+  const list=document.getElementById('resumenAutoList');list.innerHTML='';
+  const items=[];
+  items.push(`Ingresos operacionales del período: <b>${nfCOP(m.ingOper)}</b>${varIng!=null?` (${varIng>=0?'+':''}${pct(varIng)} vs. año anterior)`:''}.`);
+  items.push(`Resultado neto: <b class="${signClass(m.resultado)}">${nfCOP(m.resultado)}</b>, con margen neto de <b>${pct(m.mNeto)}</b>.`);
+  items.push(`EBITDA de <b>${nfCOP(m.ebitda)}</b> (${pct(m.mEbitda)}); ${m.ebitda<0?'la operación no genera caja a nivel operativo':'la operación genera caja antes de financieros e impuestos'}.`);
+  items.push(`Los gastos financieros suman <b>${nfCOP(m.gFin)}</b>, equivalentes a <b>${pct(m.gFinPct)}</b> de los ingresos — ${m.gFinPct>0.08?'una carga elevada que erosiona el resultado':'una carga moderada'}.`);
+  items.push(`Flujo de caja operativo estimado: <b class="${signClass(m.fco)}">${nfCOP(m.fco)}</b>.`);
+  const drv = [['Costo de operación',m.costo],['Gastos de administración',m.gAdm],['Gastos de ventas',m.gVen],['Gastos financieros',m.gFin]].sort((a,b)=>b[1]-a[1])[0];
+  items.push(`Principal componente de egreso: <b>${drv[0]}</b> con ${nfCOP(drv[1])}.`);
+  items.forEach(t=>list.insertAdjacentHTML('beforeend',`<li>${t}</li>`));
+}
+
+function baseOpts(o={}){return{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{position:'bottom'},tooltip:tt()},
+  scales:{x:{grid:{display:false}},y:{grid:GRID,ticks:{callback:moneyTick}}}};}
+function tt(){return{callbacks:{label:c=>` ${c.dataset.label?c.dataset.label+': ':''}${nfCOP(c.parsed.y!=null?c.parsed.y:c.parsed)}`}}}
+
+/* ============ RENDER: EERR ============ */
+function renderEERR(){
+  const per=periods(),prev=prevPeriods();
+  const m=metrics(per),mp=metrics(prev);
+  document.getElementById('eerrPeriodTag').textContent=periodLabel();
+  const rows=[
+    ['INGRESOS OPERACIONALES',m.ingOper,mp.ingOper,'lvl0'],
+    ['Aseo y saneamiento (USP)',m.usp,mp.usp,'sub'],
+    ['Transporte de baños',m.transp,mp.transp,'sub'],
+    ['Alquiler de equipos y casetas',m.alq,mp.alq,'sub'],
+    ['Comercio / otros',m.com,mp.com,'sub'],
+    ['(-) Devoluciones en ventas',-m.devol,-mp.devol,'sub'],
+    ['COSTO DE OPERACIÓN',m.costo,mp.costo,'lvl1'],
+    ['Mano de obra directa (MOD)',m.mod,mp.mod,'sub'],
+    ['Costos indirectos (CIF)',m.cif,mp.cif,'sub'],
+    ['UTILIDAD BRUTA',m.utilBruta,mp.utilBruta,'total'],
+    ['Gastos de administración',m.gAdm,mp.gAdm,'lvl1'],
+    ['Gastos de ventas',m.gVen,mp.gVen,'lvl1'],
+    ['EBITDA',m.ebitda,mp.ebitda,'lvl1'],
+    ['UTILIDAD OPERACIONAL',m.utilOper,mp.utilOper,'total'],
+    ['(+) Ingresos no operacionales',m.ingNoOper,mp.ingNoOper,'sub'],
+    ['(-) Gastos financieros',m.gFin,mp.gFin,'sub'],
+    ['Impuestos operativos (ICA/otros)',m.imp,mp.imp,'sub'],
+    ['RESULTADO NETO DEL PERÍODO',m.resultado,mp.resultado,'total'],
+  ];
+  let html=`<thead><tr><th>Concepto</th><th>Período actual</th><th>Año anterior</th><th>Variación</th><th>Var %</th></tr></thead><tbody>`;
+  rows.forEach(([c,v,pv,cls])=>{
+    const d=v-pv,dp=deltaPct(v,pv);
+    html+=`<tr class="${cls}"><td>${c}</td><td class="${signClass(v)}">${nfCOP(v)}</td>
+      <td style="color:var(--muted2)">${nfCOP(pv)}</td>
+      <td class="${signClass(d)}">${nfCOP(d)}</td>
+      <td class="${dp!=null?signClass(dp):''}">${dp!=null?(dp>=0?'+':'')+pct(dp):'—'}</td></tr>`;
+  });
+  html+='</tbody>';
+  document.getElementById('eerrTable').innerHTML=html;
+
+  const lbls=tlLabels();
+  const ing=per.map(p=>metrics([p]).ingOper),cos=per.map(p=>metrics([p]).costo),gas=per.map(p=>metrics([p]).gastosTot);
+  mkChart('chTrend',{type:'line',data:{labels:lbls,datasets:[
+    {label:'Ingresos',data:ing,borderColor:C.teal,backgroundColor:'rgba(22,184,166,.1)',fill:true,tension:.3,borderWidth:2,pointRadius:2},
+    {label:'Costos',data:cos,borderColor:C.orange,tension:.3,borderWidth:2,pointRadius:2},
+    {label:'Gastos',data:gas,borderColor:C.purple,tension:.3,borderWidth:2,pointRadius:2}]},options:baseOpts()});
+  const util=per.map(p=>metrics([p]).resultado);
+  mkChart('chUtil',{type:'bar',data:{labels:lbls,datasets:[{label:'Utilidad neta',data:util,backgroundColor:util.map(v=>v<0?C.red:C.green),borderRadius:5}]},options:{...baseOpts(),plugins:{legend:{display:false},tooltip:tt()}}});
+
+  // comparativo anual
+  const aIng=[],aEbi=[],aRes=[];
+  YEARS.forEach(y=>{const pp=[];for(let mm=0;mm<YMAX[y];mm++)pp.push({y,m:mm});const mm2=metrics(pp);aIng.push(mm2.ingOper);aEbi.push(mm2.ebitda);aRes.push(mm2.resultado);});
+  mkChart('chCompAnual',{type:'bar',data:{labels:YEARS.map(y=>y+(y===2026?'*':'')),datasets:[
+    {label:'Ingresos',data:aIng,backgroundColor:C.teal,borderRadius:5},
+    {label:'EBITDA',data:aEbi,backgroundColor:C.blue,borderRadius:5},
+    {label:'Resultado neto',data:aRes,backgroundColor:aRes.map(v=>v<0?C.red:C.green),borderRadius:5}]},options:baseOpts()});
+
+  // márgenes
+  const mb=per.map(p=>metrics([p]).mBruto*100),mo=per.map(p=>metrics([p]).mOper*100),mn=per.map(p=>metrics([p]).mNeto*100),me=per.map(p=>metrics([p]).mEbitda*100);
+  mkChart('chMargenes',{type:'line',data:{labels:lbls,datasets:[
+    {label:'M. Bruto',data:mb,borderColor:C.teal,tension:.3,borderWidth:2,pointRadius:2},
+    {label:'M. Operac.',data:mo,borderColor:C.blue,tension:.3,borderWidth:2,pointRadius:2},
+    {label:'M. Neto',data:mn,borderColor:C.gold,tension:.3,borderWidth:2,pointRadius:2},
+    {label:'EBITDA %',data:me,borderColor:C.purple,tension:.3,borderWidth:2,pointRadius:2}]},
+    options:{...baseOpts(),scales:{x:{grid:{display:false}},y:{grid:GRID,ticks:{callback:v=>v+'%'}}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`}}}}});
+
+  // análisis automático
+  const al=document.getElementById('eerrAutoList');al.innerHTML='';
+  const vIng=deltaPct(m.ingOper,mp.ingOper),vCos=deltaPct(m.costo,mp.costo),vGAdm=deltaPct(m.gAdm,mp.gAdm),vFin=deltaPct(m.gFin,mp.gFin);
+  const A=[];
+  if(vIng!=null)A.push(`Los ingresos operacionales ${vIng>=0?'crecieron':'cayeron'} <b>${pct(Math.abs(vIng))}</b> frente al mismo período del año anterior.`);
+  if(vCos!=null)A.push(`El costo de operación varió <b>${vCos>=0?'+':''}${pct(vCos)}</b>; representa <b>${pct(m.costo/m.ingOper)}</b> de los ingresos (año ant.: ${pct(mp.costo/(mp.ingOper||1))}).`);
+  A.push(`La utilidad bruta es <b class="${signClass(m.utilBruta)}">${nfCOP(m.utilBruta)}</b> (margen ${pct(m.mBruto)}).`);
+  if(vFin!=null)A.push(`Los gastos financieros ${vFin>=0?'aumentaron':'disminuyeron'} <b>${pct(Math.abs(vFin))}</b> y pesan <b>${pct(m.gFinPct)}</b> sobre los ingresos.`);
+  A.push(`El resultado neto del período es <b class="${signClass(m.resultado)}">${nfCOP(m.resultado)}</b>, ${m.resultado<0?'reflejando pérdidas que comprometen la sostenibilidad':'mostrando un resultado positivo'}.`);
+  A.forEach(t=>al.insertAdjacentHTML('beforeend',`<li>${t}</li>`));
+}
+
+/* ============ RENDER: COSTOS ============ */
+function renderCostos(){
+  const per=periods(),prev=prevPeriods();
+  const m=metrics(per),mp=metrics(prev);
+  document.getElementById('costPeriodTag').textContent=periodLabel();
+  const cats=[
+    ['CIF — Costos indirectos',m.cif,mp.cif],
+    ['MOD — Mano de obra directa',m.mod,mp.mod],
+    ['Gastos de administración',m.gAdm,mp.gAdm],
+    ['Gastos de ventas',m.gVen,mp.gVen],
+    ['Gastos financieros',m.gFin,mp.gFin],
+  ].sort((a,b)=>b[1]-a[1]);
+  const total=cats.reduce((a,c)=>a+c[1],0);
+  // pareto
+  let cum=0;const cumArr=cats.map(c=>{cum+=c[1];return total?cum/total*100:0;});
+  mkChart('chPareto',{data:{labels:cats.map(c=>c[0]),datasets:[
+    {type:'bar',label:'Valor',data:cats.map(c=>c[1]),backgroundColor:C.teal,borderRadius:5,order:2,yAxisID:'y'},
+    {type:'line',label:'% acumulado',data:cumArr,borderColor:C.gold,backgroundColor:C.gold,tension:.2,borderWidth:2,pointRadius:3,order:1,yAxisID:'y1'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.yAxisID==='y1'?` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`:` ${c.dataset.label}: ${nfCOP(c.parsed.y)}`}}},
+    scales:{x:{grid:{display:false}},y:{grid:GRID,ticks:{callback:moneyTick}},y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{callback:v=>v+'%'}}}}});
+  // participación
+  mkChart('chPart',{type:'doughnut',data:{labels:cats.map(c=>c[0]),datasets:[{data:cats.map(c=>c[1]),backgroundColor:[C.teal,C.blue,C.purple,C.orange,C.red],borderColor:'#15202e',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>` ${c.label}: ${nfCOP(c.parsed)} (${pct(c.parsed/total)})`}}}}});
+  // evolución histórica por naturaleza (anual)
+  const series={mod:[],cif:[],adm:[],ven:[],fin:[]};
+  YEARS.forEach(y=>{const pp=[];for(let mm=0;mm<YMAX[y];mm++)pp.push({y,m:mm});const x=metrics(pp);series.mod.push(x.mod);series.cif.push(x.cif);series.adm.push(x.gAdm);series.ven.push(x.gVen);series.fin.push(x.gFin);});
+  mkChart('chCostEvol',{type:'bar',data:{labels:YEARS.map(y=>y+(y===2026?'*':'')),datasets:[
+    {label:'CIF',data:series.cif,backgroundColor:C.teal},{label:'MOD',data:series.mod,backgroundColor:C.blue},
+    {label:'Admón',data:series.adm,backgroundColor:C.purple},{label:'Ventas',data:series.ven,backgroundColor:C.orange},
+    {label:'Financieros',data:series.fin,backgroundColor:C.red}]},
+    options:{...baseOpts(),scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:GRID,ticks:{callback:moneyTick}}}}});
+  // tabla
+  let html=`<thead><tr><th>Categoría</th><th>Actual</th><th>% total</th><th>Año ant.</th><th>Var %</th></tr></thead><tbody>`;
+  cats.forEach(([c,v,pv])=>{const dp=deltaPct(v,pv);
+    html+=`<tr><td>${c}</td><td>${nfCOP(v)}</td><td>${pct(v/total)}</td><td style="color:var(--muted2)">${nfCOP(pv)}</td><td class="${dp!=null?signClass(dp):''}">${dp!=null?(dp>=0?'+':'')+pct(dp):'—'}</td></tr>`;});
+  html+=`<tr class="total"><td>TOTAL COSTOS Y GASTOS</td><td>${nfCOP(total)}</td><td>100%</td><td>${nfCOP(cats.reduce((a,c)=>a+c[2],0))}</td><td></td></tr></tbody>`;
+  document.getElementById('costTable').innerHTML=html;
+  // hallazgos
+  const cl=document.getElementById('costAutoList');cl.innerHTML='';
+  const top=cats[0],top2=cats[1];
+  const H=[];
+  H.push(`Los <b>${top[0]}</b> son el mayor generador de egreso (${pct(top[1]/total)} del total), seguidos por <b>${top2[0]}</b> (${pct(top2[1]/total)}).`);
+  const finVar=deltaPct(m.gFin,mp.gFin);
+  if(finVar!=null)H.push(`Los gastos financieros ${finVar>=0?'crecen':'bajan'} <b>${pct(Math.abs(finVar))}</b> interanual y equivalen a ${pct(m.gFinPct)} de los ingresos: ${m.gFinPct>0.07?'principal foco de optimización vía reestructuración de pasivos':'carga manejable'}.`);
+  H.push(`El costo de operación (MOD+CIF) absorbe <b>${pct(m.costo/m.ingOper)}</b> de los ingresos; mejoras en tercerización, mantenimiento y arrendamientos de flota tienen alto impacto.`);
+  H.push(`Oportunidades: renegociación de arrendamientos y mantenimiento de flota, control de diversos/CIF, y refinanciación de deuda para reducir intereses.`);
+  H.forEach(t=>cl.insertAdjacentHTML('beforeend',`<li>${t}</li>`));
+}
+
+/* ============ RENDER: INDICADORES ============ */
+function sem(label,valTxt,status,desc){const k=status==='g'?'g':status==='y'?'y':'r';
+  return `<div class="sem"><div class="dot ${k}"></div><div><div class="s-label">${label}</div><div class="s-val">${valTxt}</div><div class="s-desc">${desc}</div></div></div>`;}
+function statusOf(v,good,mid,inv){ // inv=true menor es mejor
+  if(inv) return v<=good?'g':v<=mid?'y':'r';
+  return v>=good?'g':v>=mid?'y':'r';
+}
+function renderIndic(){
+  const per=periods();const m=metrics(per);
+  document.getElementById('semRent').innerHTML=
+    sem('Margen Bruto',pct(m.mBruto),statusOf(m.mBruto,.25,.15),'Ideal ≥ 25% · Atención 15–25% · Riesgo < 15%')+
+    sem('Margen Operacional',pct(m.mOper),statusOf(m.mOper,.05,0),'Ideal ≥ 5% · Atención 0–5% · Riesgo < 0%')+
+    sem('Margen Neto',pct(m.mNeto),statusOf(m.mNeto,0,-.05),'Ideal > 0% · Atención -5–0% · Riesgo < -5%')+
+    sem('EBITDA %',pct(m.mEbitda),statusOf(m.mEbitda,.10,.03),'Ideal ≥ 10% · Atención 3–10% · Riesgo < 3%');
+  document.getElementById('semLiq').innerHTML=
+    sem('Flujo de Caja Operativo',nfM1(m.fco),m.fco>0?'g':(m.fco>-50e6?'y':'r'),'Caja generada por la operación (proxy)')+
+    sem('Conversión de Efectivo',m.ebitda? pct(m.convCaja):'n/a',m.ebitda<=0?'r':statusOf(m.convCaja,.8,.4),'FCO / EBITDA · Ideal ≥ 80%')+
+    sem('EBITDA del período',nfM1(m.ebitda),m.ebitda>0?'g':'r','Generación operativa antes de financieros');
+  document.getElementById('semEfi').innerHTML=
+    sem('Gastos Admón / Ingresos',pct(m.gAdmPct),statusOf(m.gAdmPct,.12,.18,true),'Ideal ≤ 12% · Atención 12–18% · Riesgo > 18%')+
+    sem('Gastos Financieros / Ingresos',pct(m.gFinPct),statusOf(m.gFinPct,.05,.10,true),'Ideal ≤ 5% · Atención 5–10% · Riesgo > 10%')+
+    sem('Productividad de Ingresos',m.prodIng.toLocaleString('es-CO',{maximumFractionDigits:2})+'x',statusOf(m.prodIng,1.5,1.1),'Ingresos / gastos totales · Ideal ≥ 1.5x');
+  // radar
+  const norm=(v,min,max)=>Math.max(0,Math.min(100,(v-min)/(max-min)*100));
+  mkChart('chRadar',{type:'radar',data:{labels:['M. Bruto','M. Operac.','M. Neto','EBITDA %','Efic. Admón','Efic. Financiera'],
+    datasets:[{label:'Período',data:[norm(m.mBruto,0,.35),norm(m.mOper,-.1,.15),norm(m.mNeto,-.15,.1),norm(m.mEbitda,0,.2),norm(.2-m.gAdmPct,0,.2),norm(.12-m.gFinPct,0,.12)],
+      backgroundColor:'rgba(22,184,166,.2)',borderColor:C.teal,borderWidth:2,pointBackgroundColor:C.teal},
+      {label:'Referencia saludable',data:[71,66,100,75,60,100],borderColor:'rgba(148,166,187,.5)',borderDash:[5,4],borderWidth:1.5,pointRadius:0,backgroundColor:'transparent'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{r:{min:0,max:100,grid:GRID,angleLines:GRID,pointLabels:{color:'#cdd9e6',font:{size:11}},ticks:{display:false}}}}});
+}
+
+/* ============ RENDER: TRIBUTARIO ============ */
+function renderTribut(){
+  const per=periods();const m=metrics(per);
+  const nM=m.nMonths||1;const factorAnual=12/nM;
+  document.getElementById('ivaPeriodTag').textContent=periodLabel();
+  // hero - ahorro IVA (escenario referencia 70% reclasificación)
+  const ivaMes=m.ivaGen/nM;const ivaAnual=m.ivaGen*factorAnual;
+  const ahorroRef=ivaAnual*0.70;
+  document.getElementById('heroAhorroAnual').textContent=nfCOP(ahorroRef)+' /año';
+  const mejoraCaja=m.fco!==0? ahorroRef/Math.abs(m.fco*factorAnual):0;
+  const mejoraMargen=m.ingOper? (ahorroRef)/(m.ingOper*factorAnual):0;
+  document.getElementById('heroGrid').innerHTML=
+    `<div class="h-cell"><div class="l">IVA estimado / mes</div><div class="v">${nfCOP(ivaMes)}</div></div>
+     <div class="h-cell"><div class="l">IVA estimado / año</div><div class="v">${nfCOP(ivaAnual)}</div></div>
+     <div class="h-cell"><div class="l">Ahorro potencial (70%)</div><div class="v" style="color:#8af0c8">${nfCOP(ahorroRef)}</div></div>
+     <div class="h-cell"><div class="l">Mejora s/ flujo de caja</div><div class="v">${pct(mejoraCaja)}</div></div>
+     <div class="h-cell"><div class="l">Mejora s/ margen operativo</div><div class="v">+${(mejoraMargen*100).toFixed(1)} pp</div></div>`;
+  // composición
+  mkChart('chIvaComp',{type:'doughnut',data:{labels:['Excluido (Aseo/USP)','Transporte','Alquiler','Comercio/otros'],
+    datasets:[{data:[m.baseExcluida,m.transp,m.alq,m.com],backgroundColor:[C.teal,C.blue,C.purple,C.orange],borderColor:'#15202e',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'56%',plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>` ${c.label}: ${nfCOP(c.parsed)}`}}}}});
+  // evolución IVA mensual
+  const lbls=tlLabels();const ivaSerie=per.map(p=>metrics([p]).ivaGen);
+  mkChart('chIvaEvol',{type:'bar',data:{labels:lbls,datasets:[{label:'IVA generado (19%)',data:ivaSerie,backgroundColor:C.gold,borderRadius:5}]},options:{...baseOpts(),plugins:{legend:{display:false},tooltip:tt()}}});
+  // stats
+  const baseGrav=m.baseGravable, ventas=m.ingOper;
+  document.getElementById('ivaStats').innerHTML=
+    `<div class="pill-row"><span class="pill">Ventas op.: <b style="color:#fff">${nfM1(ventas)}</b></span></div>
+     <table class="fin" style="margin-top:10px;min-width:auto"><tbody>
+     <tr><td>Base excluida (USP)</td><td class="num-pos">${nfCOP(m.baseExcluida)}</td></tr>
+     <tr><td>Base gravable</td><td>${nfCOP(baseGrav)}</td></tr>
+     <tr><td>IVA generado (19%)</td><td class="num-neg">${nfCOP(m.ivaGen)}</td></tr>
+     <tr class="total"><td>% base excluida</td><td>${pct(ventas? m.baseExcluida/ (m.baseExcluida+baseGrav):0)}</td></tr>
+     <tr><td>IVA / ventas op.</td><td>${pct(ventas? m.ivaGen/ventas:0)}</td></tr>
+     </tbody></table>`;
+  // diagnóstico
+  const dl=document.getElementById('ivaDiagList');dl.innerHTML='';
+  const partExcl=m.baseExcluida/(m.baseExcluida+baseGrav||1);
+  const D=[
+    `Aproximadamente <b>${pct(partExcl)}</b> de la facturación corresponde al servicio público de aseo/saneamiento (USP), de tratamiento <b>excluido de IVA</b>.`,
+    `La base gravable (transporte, alquiler, comercio) asciende a <b>${nfCOP(baseGrav)}</b> en el período, generando un IVA estimado de <b>${nfCOP(m.ivaGen)}</b> (19%).`,
+    `Ese IVA encarece el precio final de las líneas gravadas y debe ser remitido a la DIAN, <b>drenando flujo de caja</b> — crítico en reorganización.`,
+    `Reclasificar/estructurar estas líneas dentro de la gestión integral de residuos abriría espacio para mejorar precio competitivo y liberar caja, con un ahorro anual estimado de hasta <b style="color:#8af0c8">${nfCOP(ivaAnual)}</b>.`
+  ];
+  D.forEach(t=>dl.insertAdjacentHTML('beforeend',`<li>${t}</li>`));
+  // modelo comparado chart (anualizado)
+  const ventasA=ventas*factorAnual, ivaA=m.ivaGen*factorAnual;
+  mkChart('chModelo',{type:'bar',data:{labels:['Precio relativo','IVA a remitir','Flujo de caja libre'],datasets:[
+    {label:'Modelo actual',data:[100, ivaA/1e6, (m.fco*factorAnual)/1e6],backgroundColor:C.orange,borderRadius:5},
+    {label:'Modelo estratégico',data:[100-19*0.7*partRelImpact(partExcl), ivaA*0.3/1e6, (m.fco*factorAnual+ahorroRef)/1e6],backgroundColor:C.teal,borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataIndex===0?` ${c.dataset.label}: ${c.parsed.y.toFixed(1)} (índice)`:` ${c.dataset.label}: $${nf0.format(c.parsed.y)} M`}}},scales:{x:{grid:{display:false}},y:{grid:GRID}}}});
+  // restructuring analysis
+  const rl=document.getElementById('restrList');rl.innerHTML='';
+  [`<b>Impacto financiero:</b> liberación estimada de hasta ${nfCOP(ahorroRef)} anuales por menor IVA en líneas reclasificadas, mejorando el flujo de caja libre.`,
+   `<b>Impacto tributario:</b> mayor proporción de ingresos bajo tratamiento excluido, reduciendo la base sobre la cual se causa IVA.`,
+   `<b>Competitividad de precios:</b> al no trasladar IVA, los precios pueden ser hasta ~${(19*partRelImpact(partExcl)).toFixed(0)}% más competitivos en las líneas afectadas.`,
+   `<b>Posicionamiento comercial:</b> alineación con servicios ambientales y de gestión de residuos, habilitando contratación pública y clientes corporativos con criterios ESG.`
+  ].forEach(t=>rl.insertAdjacentHTML('beforeend',`<li>${t}</li>`));
+  // insolvencia
+  const il=document.getElementById('insolList');il.innerHTML='';
+  const cargaTrib=(m.imp+m.ivaGen);
+  [`La compañía se encuentra en <b>proceso de reorganización empresarial</b>; cada peso de caja es crítico para el cumplimiento del acuerdo con acreedores.`,
+   `La carga tributaria estimada del período (impuestos operativos + IVA generado: <b>${nfCOP(cargaTrib)}</b>) compite directamente con la liquidez disponible para pagos a acreedores.`,
+   `Con gastos financieros de <b>${nfCOP(m.gFin)}</b> (${pct(m.gFinPct)} de ingresos) y resultado neto <b class="${signClass(m.resultado)}">${nfCOP(m.resultado)}</b>, la recuperación exige fortalecer el flujo de caja operativo.`,
+   `La optimización del IVA y la reestructuración del modelo de facturación son <b>palancas directas de liquidez</b> que apoyan la viabilidad del acuerdo de reorganización.`,
+   `Se recomienda priorizar: (1) refinanciación de pasivos financieros, (2) optimización tributaria vía ESP, y (3) disciplina en CIF y arrendamientos de flota.`
+  ].forEach(t=>il.insertAdjacentHTML('beforeend',`<li>${t}</li>`));
+}
+function partRelImpact(partExcl){return 1;} // factor de traslado de IVA (simplificado=1)
+
+/* ============ SIMULADOR ============ */
+const SIM={sl1:70,sl2:19,sl3:6,sl4:4,sl5:15};
+['sl1','sl2','sl3','sl4','sl5'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.oninput=()=>{SIM[id]=+el.value;
+    document.getElementById(id+'v').textContent=el.value+(id==='sl1'||id==='sl3'||id==='sl4'||id==='sl5'||id==='sl2'?'%':'');
+    renderSim();};
+});
+function resetSim(){SIM.sl1=70;SIM.sl2=19;SIM.sl3=6;SIM.sl4=4;SIM.sl5=15;
+  document.getElementById('sl1').value=70;document.getElementById('sl2').value=19;document.getElementById('sl3').value=6;document.getElementById('sl4').value=4;document.getElementById('sl5').value=15;
+  document.getElementById('sl1v').textContent='70%';document.getElementById('sl2v').textContent='19%';document.getElementById('sl3v').textContent='6%';document.getElementById('sl4v').textContent='4%';document.getElementById('sl5v').textContent='15%';
+  renderSim();}
+function renderSim(){
+  const per=periods();const m=metrics(per);const f=12/(m.nMonths||1);
+  // actual anualizado
+  const A={ventas:m.ingOper*f, iva:m.ivaGen*f, costos:m.costo*f, gastos:m.gastosTot*f, gfin:m.gFin*f};
+  A.utilOper=(m.utilOper)*f; A.fco=m.fco*f;
+  // optimizado
+  const reclas=SIM.sl1/100, tasa=SIM.sl2/100, incV=SIM.sl3/100, redC=SIM.sl4/100, redF=SIM.sl5/100;
+  const baseGravA=m.baseGravable*f;
+  const ivaOpt=baseGravA*(1-reclas)*tasa; // IVA que sigue gravado
+  const ahorroIva=A.iva - ivaOpt;
+  const ventasOpt=A.ventas*(1+incV);
+  const costosOpt=A.costos*(1-redC);
+  const gfinOpt=A.gfin*(1-redF);
+  const gastosOpt=A.gastos - (A.gfin-gfinOpt);
+  // recomputar utilidad: utilidad operacional = ventas - costos - (gAdm+gVen)
+  const gOperA=(m.gAdm+m.gVen)*f;
+  const utilOperA=A.ventas-A.costos-gOperA;
+  const utilOperOpt=ventasOpt-costosOpt-gOperA;
+  const ingNoOperA=m.ingNoOper*f;
+  const resA=utilOperA+ingNoOperA-A.gfin;
+  const resOpt=utilOperOpt+ingNoOperA-gfinOpt;
+  const fcoOpt=A.fco+ahorroIva+(utilOperOpt-utilOperA)+(A.gfin-gfinOpt);
+  const margOperA=A.ventas? utilOperA/A.ventas:0, margOperOpt=ventasOpt? utilOperOpt/ventasOpt:0;
+  const compA=100, compOpt=100+ (reclas*19*0.6) + incV*100*0.3;
+  function row(lbl,a,o,fmt,hl){fmt=fmt||(x=>nfM1(x));
+    const d=o-a;const dp=a? d/Math.abs(a):0;
+    return `<tr class="${hl?'hl':''}"><td>${lbl}</td><td class="act">${fmt(a)}</td><td class="opt">${fmt(o)}</td>
+      <td>${d!==0?`<span class="delta-tag ${d>=0?'up':'down'}">${d>=0?'+':''}${fmt(d)}</span>`:'—'}</td></tr>`;}
+  let html=`<thead><tr><th>Concepto</th><th>Actual</th><th>Optimizado</th><th>Δ</th></tr></thead><tbody>`;
+  html+=row('Ventas (anual)',A.ventas,ventasOpt);
+  html+=row('IVA generado',A.iva,ivaOpt);
+  html+=row('Flujo de caja',A.fco,fcoOpt,null,true);
+  html+=row('Costos',A.costos,costosOpt);
+  html+=row('Gastos financieros',A.gfin,gfinOpt);
+  html+=row('Margen operacional',margOperA,margOperOpt,x=>pct(x));
+  html+=row('Utilidad estimada',resA,resOpt,null,true);
+  html+=row('Competitividad (índice)',compA,compOpt,x=>x.toFixed(0));
+  html+='</tbody>';
+  document.getElementById('simTable').innerHTML=html;
+  mkChart('chSimUtil',{type:'bar',data:{labels:['Actual','Optimizado'],datasets:[{label:'Utilidad estimada',data:[resA,resOpt],backgroundColor:[C.red,resOpt<0?C.orange:C.green],borderRadius:6}]},options:{...baseOpts(),plugins:{legend:{display:false},title:{display:true,text:'Utilidad anual estimada',color:'#cdd9e6'},tooltip:tt()}}});
+  mkChart('chSimCaja',{type:'bar',data:{labels:['Actual','Optimizado'],datasets:[{label:'Flujo de caja',data:[A.fco,fcoOpt],backgroundColor:[C.gray,C.teal],borderRadius:6}]},options:{...baseOpts(),plugins:{legend:{display:false},title:{display:true,text:'Flujo de caja anual',color:'#cdd9e6'},tooltip:tt()}}});
+  const sl=document.getElementById('simList');sl.innerHTML='';
+  [`Reclasificando el <b>${SIM.sl1}%</b> de la base gravada se evita un IVA anual de <b style="color:#8af0c8">${nfCOP(ahorroIva)}</b>.`,
+   `El flujo de caja anual pasaría de <b>${nfCOP(A.fco)}</b> a <b class="${signClass(fcoOpt)}">${nfCOP(fcoOpt)}</b> (mejora de ${nfCOP(fcoOpt-A.fco)}).`,
+   `La utilidad estimada mejora de <b class="${signClass(resA)}">${nfCOP(resA)}</b> a <b class="${signClass(resOpt)}">${nfCOP(resOpt)}</b>.`,
+   `El margen operacional pasa de ${pct(margOperA)} a <b>${pct(margOperOpt)}</b> y el índice de competitividad sube ${(compOpt-compA).toFixed(0)} puntos.`
+  ].forEach(t=>sl.insertAdjacentHTML('beforeend',`<li>${t}</li>`));
+}
+
+/* ============ CONCLUSIONES ============ */
+function renderConclu(){
+  const per=periods(),prev=prevPeriods();const m=metrics(per),mp=metrics(prev);
+  document.getElementById('concPeriodTag').textContent=periodLabel();
+  const f=12/(m.nMonths||1);
+  const vIng=deltaPct(m.ingOper,mp.ingOper);
+  // tendencia anual de ingresos
+  const ingY=YEARS.map(y=>{const pp=[];for(let mm=0;mm<YMAX[y];mm++)pp.push({y,m:mm});return metrics(pp).ingOper;});
+  const resY=YEARS.map(y=>{const pp=[];for(let mm=0;mm<YMAX[y];mm++)pp.push({y,m:mm});return metrics(pp).resultado;});
+  const set=(id,arr)=>{const e=document.getElementById(id);e.innerHTML='';arr.forEach(t=>e.insertAdjacentHTML('beforeend',`<li>${t}</li>`));};
+  set('c1',[
+    `Resultado neto del período: <b class="${signClass(m.resultado)}">${nfCOP(m.resultado)}</b> (margen ${pct(m.mNeto)}).`,
+    `La compañía opera en <b>reorganización empresarial</b>, con resultados ${m.resultado<0?'negativos que exigen acciones correctivas':'en recuperación'}.`,
+    `EBITDA de ${nfCOP(m.ebitda)} (${pct(m.mEbitda)}): ${m.ebitda<0?'la operación aún no cubre su estructura de costos':'genera caja operativa'}.`]);
+  set('c2',[
+    vIng!=null?`Ingresos operacionales ${vIng>=0?'al alza':'a la baja'}: ${vIng>=0?'+':''}${pct(vIng)} interanual.`:'Ingresos operacionales del período: '+nfCOP(m.ingOper)+'.',
+    `Evolución anual de ingresos: ${ingY.map((v,i)=>YEARS[i]+': '+nfM(v)).join(' · ')} (2026 parcial).`,
+    `La línea de aseo/saneamiento (USP) concentra la mayor parte de la facturación, dando estabilidad de ingresos recurrentes.`]);
+  set('c3',[
+    `Costo de operación: ${nfCOP(m.costo)} (${pct(m.costo/m.ingOper)} de ingresos).`,
+    `Gastos financieros: <b>${nfCOP(m.gFin)}</b> (${pct(m.gFinPct)} de ingresos) — ${m.gFinPct>0.07?'carga crítica para la rentabilidad':'nivel manejable'}.`,
+    `La estructura CIF + arrendamientos de flota y mantenimiento es el foco principal de control de costos.`]);
+  set('c4c',[
+    `Margen bruto ${pct(m.mBruto)}, operacional ${pct(m.mOper)}, neto ${pct(m.mNeto)}.`,
+    `Resultado anual: ${resY.map((v,i)=>YEARS[i]+': '+nfM(v)).join(' · ')}.`,
+    `${m.mOper<0?'El margen operacional negativo indica que la estructura de costos y gastos supera el ingreso.':'El margen operacional es positivo, base para la recuperación.'}`]);
+  set('c5',[
+    `Flujo de caja operativo (proxy): <b class="${signClass(m.fco)}">${nfCOP(m.fco)}</b>.`,
+    `La carga de IVA (${nfCOP(m.ivaGen)}) e impuestos operativos (${nfCOP(m.imp)}) presiona la liquidez disponible para acreedores.`,
+    `Fortalecer la caja es prioritario para el cumplimiento del acuerdo de reorganización.`]);
+  set('c6',[
+    `Pérdidas recurrentes y margen neto negativo comprometen la sostenibilidad.`,
+    `Alta carga financiera (${pct(m.gFinPct)} de ingresos) derivada del endeudamiento.`,
+    `Riesgo de liquidez por concurrencia de obligaciones tributarias y acuerdo concursal.`,
+    `Dependencia de pocas líneas de ingreso y de contratos USP.`]);
+  set('c7',[
+    `Refinanciación/reestructuración de pasivos financieros para reducir intereses.`,
+    `Optimización de CIF: arrendamientos de flota, mantenimiento y servicios tercerizados.`,
+    `Disciplina en gastos diversos y de viaje.`,
+    `Optimización tributaria del IVA en líneas gravadas.`]);
+  set('c8',[
+    `Ahorro potencial de IVA estimado: hasta <b style="color:#8af0c8">${nfCOP(m.ivaGen*f*0.7)}</b> anuales (escenario de referencia).`,
+    `Mayor proporción de ingresos bajo tratamiento excluido mejora precio competitivo y caja.`,
+    `Palanca directa de liquidez en el contexto de reorganización.`]);
+  set('c9',[
+    `La calificación como ESP <b>blinda el tratamiento excluido</b> de la línea principal de aseo.`,
+    `Habilita contratación pública y posicionamiento como operador de servicios ambientales.`,
+    `Beneficio tributario y competitivo superior a los costos de estructuración en el mediano plazo.`,
+    `Requiere estudio regulatorio formal previo a la radicación (análisis gerencial, no jurídico).`]);
+  set('c10',[
+    `Estructurar transporte, alquiler y comercio bajo gestión integral de residuos amplía la base excluida.`,
+    `Mejora el flujo de caja libre y la competitividad de precios.`,
+    `Refuerza el posicionamiento comercial en mercados ambientales y ESG.`]);
+  set('c11',[
+    `1 · Avanzar en el estudio formal de calificación como ESP ante la SSPD.`,
+    `2 · Reestructurar el modelo de facturación hacia conceptos de gestión de residuos y servicios ambientales.`,
+    `3 · Refinanciar pasivos financieros para reducir la carga de intereses.`,
+    `4 · Implementar un plan de optimización de costos (CIF, flota, mantenimiento).`,
+    `5 · Fortalecer el flujo de caja operativo como eje del cumplimiento del acuerdo de reorganización.`,
+    `6 · Monitorear mensualmente este tablero para la toma de decisiones de la junta directiva.`]);
+}
+
+/* ============ EXPORTACIÓN ============ */
+function curMetricsRows(){
+  const per=periods();const m=metrics(per);
+  return [['Concepto','Valor (COP)'],
+   ['Periodo',periodLabel()],
+   ['Ingresos operacionales',Math.round(m.ingOper)],['Ingresos no operacionales',Math.round(m.ingNoOper)],
+   ['Costo de operacion',Math.round(m.costo)],['  MOD',Math.round(m.mod)],['  CIF',Math.round(m.cif)],
+   ['Utilidad bruta',Math.round(m.utilBruta)],
+   ['Gastos de administracion',Math.round(m.gAdm)],['Gastos de ventas',Math.round(m.gVen)],
+   ['Gastos financieros',Math.round(m.gFin)],['EBITDA',Math.round(m.ebitda)],
+   ['Utilidad operacional',Math.round(m.utilOper)],['Impuestos operativos',Math.round(m.imp)],
+   ['Resultado neto',Math.round(m.resultado)],['Flujo de caja operativo (proxy)',Math.round(m.fco)],
+   ['Margen bruto',pct(m.mBruto)],['Margen operacional',pct(m.mOper)],['Margen neto',pct(m.mNeto)],['EBITDA %',pct(m.mEbitda)],
+   ['Base gravable IVA',Math.round(m.baseGravable)],['IVA generado (19%)',Math.round(m.ivaGen)]];
+}
+function exportCSV(){
+  const rows=curMetricsRows();
+  let csv='﻿'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+  dl(csv,'Resumen_BAMOCOL_'+periodLabel().replace(/[^\w]+/g,'_')+'.csv','text/csv');
+}
+function exportExcel(){
+  const rows=curMetricsRows();
+  let t='<table border=1>'+rows.map(r=>'<tr>'+r.map(c=>`<td>${c}</td>`).join('')+'</tr>').join('')+'</table>';
+  const html=`<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body><div id="lockScreen"><div class="lock-card">
+<div class="lock-mark">BM</div>
+<h1>BAMOCOL S.A.</h1>
+<p class="lock-sub">Dashboard Gerencial &middot; Acceso restringido</p>
+<form id="lockForm" autocomplete="off">
+<input type="password" id="lockPw" placeholder="Contrase&ntilde;a de acceso" autocomplete="current-password">
+<button type="submit" id="lockBtn">Ingresar</button>
+</form>
+<div id="lockMsg" class="lock-msg"></div>
+<div class="lock-foot">Informaci&oacute;n financiera confidencial<br>Uso exclusivo de junta directiva y gerencia</div>
+</div></div>${t}<script>
+(function(){
+  document.body.classList.add('locked');
+  var b64=function(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0);});};
+  var form=document.getElementById('lockForm'),pw=document.getElementById('lockPw'),
+      btn=document.getElementById('lockBtn'),msg=document.getElementById('lockMsg');
+  setTimeout(function(){pw.focus();},200);
+  async function tryUnlock(p){
+    if(!window.crypto||!crypto.subtle) throw new Error('nocrypto');
+    var km=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);
+    var key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(ENC.salt),iterations:ENC.iter,hash:'SHA-256'},km,{name:'AES-CBC',length:256},false,['decrypt']);
+    var ptBuf=await crypto.subtle.decrypt({name:'AES-CBC',iv:b64(ENC.iv)},key,b64(ENC.ct));
+    return JSON.parse(new TextDecoder().decode(ptBuf));
+  }
+  form.addEventListener('submit',async function(e){
+    e.preventDefault();
+    msg.className='lock-msg';msg.textContent='';btn.disabled=true;btn.textContent='Verificando...';
+    try{
+      var arr=await tryUnlock(pw.value);
+      msg.textContent='Acceso concedido';
+      boot(arr);
+      var ls=document.getElementById('lockScreen');
+      ls.style.transition='opacity .4s';ls.style.opacity='0';
+      setTimeout(function(){ls.remove();document.body.classList.remove('locked');},400);
+    }catch(err){
+      btn.disabled=false;btn.textContent='Ingresar';
+      msg.className='lock-msg err';
+      msg.textContent=(err&&err.message==='nocrypto')?'Este navegador requiere conexion segura (https).':'Contrasena incorrecta. Intente de nuevo.';
+      pw.value='';pw.focus();
+    }
+  });
+})();
+</script></body></html>`;
+  dl(html,'Resumen_BAMOCOL.xls','application/vnd.ms-excel');
+}
+function exportTableById(id,name){
+  const tb=document.getElementById(id);if(!tb)return;
+  const html=`<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body><div id="lockScreen"><div class="lock-card">
+<div class="lock-mark">BM</div>
+<h1>BAMOCOL S.A.</h1>
+<p class="lock-sub">Dashboard Gerencial &middot; Acceso restringido</p>
+<form id="lockForm" autocomplete="off">
+<input type="password" id="lockPw" placeholder="Contrase&ntilde;a de acceso" autocomplete="current-password">
+<button type="submit" id="lockBtn">Ingresar</button>
+</form>
+<div id="lockMsg" class="lock-msg"></div>
+<div class="lock-foot">Informaci&oacute;n financiera confidencial<br>Uso exclusivo de junta directiva y gerencia</div>
+</div></div><h3>BAMOCOL S.A. - ${name} - ${periodLabel()}</h3>${tb.outerHTML}<script>
+(function(){
+  document.body.classList.add('locked');
+  var b64=function(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0);});};
+  var form=document.getElementById('lockForm'),pw=document.getElementById('lockPw'),
+      btn=document.getElementById('lockBtn'),msg=document.getElementById('lockMsg');
+  setTimeout(function(){pw.focus();},200);
+  async function tryUnlock(p){
+    if(!window.crypto||!crypto.subtle) throw new Error('nocrypto');
+    var km=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);
+    var key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(ENC.salt),iterations:ENC.iter,hash:'SHA-256'},km,{name:'AES-CBC',length:256},false,['decrypt']);
+    var ptBuf=await crypto.subtle.decrypt({name:'AES-CBC',iv:b64(ENC.iv)},key,b64(ENC.ct));
+    return JSON.parse(new TextDecoder().decode(ptBuf));
+  }
+  form.addEventListener('submit',async function(e){
+    e.preventDefault();
+    msg.className='lock-msg';msg.textContent='';btn.disabled=true;btn.textContent='Verificando...';
+    try{
+      var arr=await tryUnlock(pw.value);
+      msg.textContent='Acceso concedido';
+      boot(arr);
+      var ls=document.getElementById('lockScreen');
+      ls.style.transition='opacity .4s';ls.style.opacity='0';
+      setTimeout(function(){ls.remove();document.body.classList.remove('locked');},400);
+    }catch(err){
+      btn.disabled=false;btn.textContent='Ingresar';
+      msg.className='lock-msg err';
+      msg.textContent=(err&&err.message==='nocrypto')?'Este navegador requiere conexion segura (https).':'Contrasena incorrecta. Intente de nuevo.';
+      pw.value='';pw.focus();
+    }
+  });
+})();
+</script></body></html>`;
+  dl(html,name+'_BAMOCOL.xls','application/vnd.ms-excel');
+}
+function dl(content,fname,mime){
+  const blob=new Blob([content],{type:mime+';charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();URL.revokeObjectURL(a.href);
+}
+function togglePresent(){document.body.classList.toggle('present');}
+
+/* ============ ORQUESTACIÓN ============ */
+function renderActive(){
+  switch(activePg){
+    case 'resumen':renderResumen();break;
+    case 'eerr':renderEERR();break;
+    case 'costos':renderCostos();break;
+    case 'indic':renderIndic();break;
+    case 'tribut':renderTribut();break;
+    case 'simul':renderSim();break;
+    case 'conclu':renderConclu();break;
+  }
+}
+function renderAll(){renderActive();}
+function boot(accounts){RAW_ACCOUNTS=accounts;buildIndex();syncMonthMax();renderResumen();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.body.classList.remove('present');});
+</script>
+<script>
+(function(){
+  document.body.classList.add('locked');
+  var b64=function(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0);});};
+  var form=document.getElementById('lockForm'),pw=document.getElementById('lockPw'),
+      btn=document.getElementById('lockBtn'),msg=document.getElementById('lockMsg');
+  setTimeout(function(){pw.focus();},200);
+  async function tryUnlock(p){
+    if(!window.crypto||!crypto.subtle) throw new Error('nocrypto');
+    var km=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);
+    var key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(ENC.salt),iterations:ENC.iter,hash:'SHA-256'},km,{name:'AES-CBC',length:256},false,['decrypt']);
+    var ptBuf=await crypto.subtle.decrypt({name:'AES-CBC',iv:b64(ENC.iv)},key,b64(ENC.ct));
+    return JSON.parse(new TextDecoder().decode(ptBuf));
+  }
+  form.addEventListener('submit',async function(e){
+    e.preventDefault();
+    msg.className='lock-msg';msg.textContent='';btn.disabled=true;btn.textContent='Verificando...';
+    try{
+      var arr=await tryUnlock(pw.value);
+      msg.textContent='Acceso concedido';
+      boot(arr);
+      var ls=document.getElementById('lockScreen');
+      ls.style.transition='opacity .4s';ls.style.opacity='0';
+      setTimeout(function(){ls.remove();document.body.classList.remove('locked');},400);
+    }catch(err){
+      btn.disabled=false;btn.textContent='Ingresar';
+      msg.className='lock-msg err';
+      msg.textContent=(err&&err.message==='nocrypto')?'Este navegador requiere conexion segura (https).':'Contrasena incorrecta. Intente de nuevo.';
+      pw.value='';pw.focus();
+    }
+  });
+})();
+</script></body>
+</html>
