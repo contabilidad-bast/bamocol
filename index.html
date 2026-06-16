@@ -747,8 +747,10 @@ function renderEERR(){
   rows.forEach(([c,v,pv,cls])=>{
     const d=v-pv,dp=deltaPct(v,pv);
     const part=m.ingOper? v/m.ingOper:null;
+    const isRes=(cls==='total'||c.indexOf('EBITDA')>=0);
+    const partColor=isRes?(v>=0?'#7ff0bb':'#ff8d83'):'#9fd8d0';
     html+=`<tr class="${cls}"><td>${c}</td><td class="${signClass(v)}">${nfCOP(v)}</td>
-      <td style="color:#9fd8d0">${part!=null?pct(part):'—'}</td>
+      <td style="color:${partColor};font-weight:${isRes?'700':'400'}">${part!=null?pct(part):'—'}</td>
       <td style="color:var(--muted2)">${nfCOP(pv)}</td>
       <td class="${signClass(d)}">${nfCOP(d)}</td>
       <td class="${dp!=null?signClass(dp):''}">${dp!=null?(dp>=0?'+':'')+pct(dp):'—'}</td></tr>`;
@@ -826,10 +828,10 @@ function renderCostos(){
     {label:'Financieros',data:series.fin,backgroundColor:C.red}]},
     options:{...baseOpts(),scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:GRID,ticks:{callback:moneyTick}}}}});
   // tabla
-  let html=`<thead><tr><th>Categoría</th><th>Actual</th><th>% total</th><th>Año ant.</th><th>Var %</th></tr></thead><tbody>`;
+  let html=`<thead><tr><th>Categoría</th><th>Actual</th><th>% total</th><th>% Ingresos</th><th>Año ant.</th><th>Var %</th></tr></thead><tbody>`;
   cats.forEach(([c,v,pv])=>{const dp=deltaPct(v,pv);
-    html+=`<tr><td>${c}</td><td>${nfCOP(v)}</td><td>${pct(v/total)}</td><td style="color:var(--muted2)">${nfCOP(pv)}</td><td class="${dp!=null?signClass(dp):''}">${dp!=null?(dp>=0?'+':'')+pct(dp):'—'}</td></tr>`;});
-  html+=`<tr class="total"><td>TOTAL COSTOS Y GASTOS</td><td>${nfCOP(total)}</td><td>100%</td><td>${nfCOP(cats.reduce((a,c)=>a+c[2],0))}</td><td></td></tr></tbody>`;
+    html+=`<tr><td>${c}</td><td>${nfCOP(v)}</td><td>${pct(v/total)}</td><td style="color:#9fd8d0">${m.ingOper?pct(v/m.ingOper):'—'}</td><td style="color:var(--muted2)">${nfCOP(pv)}</td><td class="${dp!=null?signClass(dp):''}">${dp!=null?(dp>=0?'+':'')+pct(dp):'—'}</td></tr>`;});
+  html+=`<tr class="total"><td>TOTAL COSTOS Y GASTOS</td><td>${nfCOP(total)}</td><td>100%</td><td style="color:#9fd8d0">${m.ingOper?pct(total/m.ingOper):'—'}</td><td>${nfCOP(cats.reduce((a,c)=>a+c[2],0))}</td><td></td></tr></tbody>`;
   document.getElementById('costTable').innerHTML=html;
   // hallazgos
   const cl=document.getElementById('costAutoList');cl.innerHTML='';
